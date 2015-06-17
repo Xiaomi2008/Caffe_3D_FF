@@ -1,0 +1,18 @@
+train_net: "../models/train_snems3d_AS2D_2.prototxt"
+test_net: "../models/test_snems3d_AS2D_2.prototxt"
+test_iter: 1
+test_interval:120 
+# lr for fine-tuning should be lower than when starting from scratch
+base_lr: 0.01
+lr_policy: "step"
+gamma: 0.1
+# stepsize should also be lower, as we're closer to being done
+stepsize: 30000
+display: 10
+max_iter: 250000
+momentum: 0.9
+weight_decay: 0.00005
+snapshot: 4000
+snapshot_prefix: "../models/snems3d_pad_2_47_47_2D_deeper_100_classes"
+# uncomment the following to default to CPU mode solving
+solver_mode: GPU

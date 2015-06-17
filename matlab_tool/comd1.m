@@ -1,0 +1,2 @@
+set_run_all_param('ISH','/home/tzeng/ABA/autoGenelable_multi_lables_proj/code/caffe/models/vgg_16_fine_tune_gen/deploy_ELTmaxpool_multi_sharedwieght_net_slice10_ish_1.prototxt','/home/tzeng/ABA/autoGenelable_multi_lables_proj/code/caffe/models/finetune_vgg_16_lastLR_3-6_TLR_3-E5_step2500_blancedSample_ontoL_5_ISH_iter_15000','flat_conv5_3_eltmax','E11.5','/home/tzeng/ABA/autoGenelable_multi_lables_proj/temp/infor_exchange_finetune_vgg_16_lastLR_3-6_TLR_3-E5_step2500_blancedSample_ontoL_5_ISH_iter_15000E11.5flat_conv5_3_eltmaxISH',2,'multiImage');
+exit

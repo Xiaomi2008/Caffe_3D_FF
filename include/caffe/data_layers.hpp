@@ -1,0 +1,439 @@
+// Copyright 2014 BVLC and contributors.
+
+#ifndef CAFFE_DATA_LAYERS_HPP_
+#define CAFFE_DATA_LAYERS_HPP_
+
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "leveldb/db.h"
+#include "lmdb.h"
+#include "pthread.h"
+#include "hdf5.h"
+#include "boost/scoped_ptr.hpp"
+
+#include "caffe/blob.hpp"
+#include "caffe/common.hpp"
+#include "caffe/filler.hpp"
+#include "caffe/layer.hpp"
+#include "caffe/proto/caffe.pb.h"
+
+namespace caffe {
+
+#define HDF5_DATA_DATASET_NAME "data"
+#define HDF5_DATA_LABEL_NAME "label"
+
+// TODO: DataLayer, ImageDataLayer, and WindowDataLayer all have the
+// same basic structure and a lot of duplicated code.
+
+// This function is used to create a pthread that prefetches the data.
+template <typename Dtype>
+void* DataLayerPrefetch(void* layer_pointer);
+
+template <typename Dtype>
+class DataLayer : public Layer<Dtype> {
+  // The function used to perform prefetching.
+  friend void* DataLayerPrefetch<Dtype>(void* layer_pointer);
+
+ public:
+  explicit DataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~DataLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  virtual void CreatePrefetchThread();
+  virtual void JoinPrefetchThread();
+  virtual unsigned int PrefetchRand();
+
+  shared_ptr<Caffe::RNG> prefetch_rng_;
+
+  // LEVELDB
+  shared_ptr<leveldb::DB> db_;
+  shared_ptr<leveldb::Iterator> iter_;
+  // LMDB
+  MDB_env* mdb_env_;
+  MDB_dbi mdb_dbi_;
+  MDB_txn* mdb_txn_;
+  MDB_cursor* mdb_cursor_;
+  MDB_val mdb_key_, mdb_value_;
+
+  int datum_channels_;
+  int datum_height_;
+  int datum_width_;
+  int datum_size_;
+  int datum_depth_;
+  pthread_t thread_;
+  shared_ptr<Blob<Dtype> > prefetch_data_;
+  shared_ptr<Blob<Dtype> > prefetch_label_;
+  Blob<Dtype> data_mean_;
+  bool output_labels_;
+  Caffe::Phase phase_;
+};
+
+template <typename Dtype>
+void* ImageLabelDataLayerPrefetch(void* layer_pointer);
+
+template <typename Dtype>
+class ImageLabelDataLayer : public Layer<Dtype> {
+  // The function used to perform prefetching.
+  friend void* ImageLabelDataLayerPrefetch<Dtype>(void* layer_pointer);
+
+ public:
+  explicit ImageLabelDataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~ImageLabelDataLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_IMAGE_LABEL_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  virtual void CreatePrefetchThread();
+  virtual void JoinPrefetchThread();
+  virtual unsigned int PrefetchRand();
+  
+  virtual void readNextDatums();
+  virtual void ProcessLabelSelectParam();
+  virtual void ReadLabelProbMappingFile(const string& file_name);
+  virtual void compute_label_skip_rate();
+  //virtual void sort_label_prob_map();
+  virtual bool accept_given_label(const int label);
+  virtual int  get_converted_label(const int label);
+  
+
+  shared_ptr<Caffe::RNG> prefetch_rng_;
+
+  // LEVELDB
+  shared_ptr<leveldb::DB> db_;
+  shared_ptr<leveldb::Iterator> iter_;
+  // LMDB
+  MDB_env* mdb_env_;
+  MDB_dbi mdb_dbi_;
+  MDB_txn* mdb_txn_;
+  MDB_cursor* mdb_cursor_;
+  MDB_val mdb_key_, mdb_value_;
+
+  int datum_channels_;
+  int datum_height_;
+  int datum_width_;
+  int datum_size_;
+  int datum_depth_;
+  Datum datum_;
+  int num_memory_datums_;
+  vector<Datum> datums_;
+  
+  int out_label_size_h_;
+  int out_label_size_w_;
+  int out_label_size_d_;
+  int crop_size_h_;
+  int crop_size_w_;
+  int crop_size_d_;
+  
+  int rand_patch_times_;
+  int read_patch_times_; 
+  
+  bool output_labels_;
+  bool is_crop_;
+  
+  pthread_t thread_;
+  shared_ptr<Blob<Dtype> > prefetch_data_;
+  shared_ptr<Blob<Dtype> > prefetch_label_;
+  Blob<Dtype> data_mean_;
+  
+  std::map <int, float> label_prob_map_;
+  std::map <int, unsigned int> label_skip_rate_map_;
+  std::map <int, int> label_mapping_map_;
+  
+  unsigned int num_labels_;
+  unsigned  int num_labels_with_prob_ ;
+  bool  balancing_label_;
+  unsigned int num_top_label_balance_;
+  bool  rest_of_label_mapping_;
+  bool  map2order_label_;
+ // bool  balancing_rest_of_label_;
+  bool  ignore_rest_of_label_;
+  int   rest_of_label_mapping_label_;
+  float rest_of_label_prob_;
+  
+  
+  Caffe::Phase phase_;
+};
+
+
+
+template <typename Dtype>
+class DummyDataLayer : public Layer<Dtype> {
+ public:
+  explicit DummyDataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_DUMMY_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  vector<shared_ptr<Filler<Dtype> > > fillers_;
+  vector<bool> refill_;
+};
+
+template <typename Dtype>
+class HDF5DataLayer : public Layer<Dtype> {
+ public:
+  explicit HDF5DataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~HDF5DataLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_HDF5_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void LoadHDF5FileData(const char* filename);
+
+  std::vector<std::string> hdf_filenames_;
+  unsigned int num_files_;
+  unsigned int current_file_;
+  hsize_t current_row_;
+  Blob<Dtype> data_blob_;
+  Blob<Dtype> label_blob_;
+};
+
+template <typename Dtype>
+class HDF5OutputLayer : public Layer<Dtype> {
+ public:
+  explicit HDF5OutputLayer(const LayerParameter& param);
+  virtual ~HDF5OutputLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top) {}
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_HDF5_OUTPUT;
+  }
+  // TODO: no limit on the number of blobs
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 0; }
+
+  inline std::string file_name() const { return file_name_; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void SaveBlobs();
+
+  std::string file_name_;
+  hid_t file_id_;
+  Blob<Dtype> data_blob_;
+  Blob<Dtype> label_blob_;
+};
+
+// This function is used to create a pthread that prefetches the data.
+template <typename Dtype>
+void* ImageDataLayerPrefetch(void* layer_pointer);
+
+template <typename Dtype>
+class ImageDataLayer : public Layer<Dtype> {
+  // The function used to perform prefetching.
+  friend void* ImageDataLayerPrefetch<Dtype>(void* layer_pointer);
+
+ public:
+  explicit ImageDataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~ImageDataLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_IMAGE_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  virtual void ShuffleImages();
+
+  virtual void CreatePrefetchThread();
+  virtual void JoinPrefetchThread();
+  virtual unsigned int PrefetchRand();
+
+  shared_ptr<Caffe::RNG> prefetch_rng_;
+  vector<std::pair<std::string, vector<int> > > lines_;
+  int lines_id_;
+  int datum_channels_;
+  int datum_height_;
+  int datum_width_;
+  int datum_size_;
+  pthread_t thread_;
+  shared_ptr<Blob<Dtype> > prefetch_data_;
+  shared_ptr<Blob<Dtype> > prefetch_label_;
+  Blob<Dtype> data_mean_;
+  Caffe::Phase phase_;
+  bool output_labels_;
+};
+
+/* MemoryDataLayer
+*/
+template <typename Dtype>
+class MemoryDataLayer : public Layer<Dtype> {
+ public:
+  explicit MemoryDataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_MEMORY_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+  // Reset should accept const pointers, but can't, because the memory
+  //  will be given to Blob, which is mutable
+  void Reset(Dtype* data, Dtype* label, int n);
+  int datum_channels() { return datum_channels_; }
+  int datum_height() { return datum_height_; }
+  int datum_width() { return datum_width_; }
+  int datum_depth() { return datum_depth_; }
+  int batch_size() { return batch_size_; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  Dtype* data_;
+  Dtype* labels_;
+  int datum_channels_;
+  int datum_height_;
+  int datum_width_;
+  int datum_size_;
+  int datum_depth_;
+  int batch_size_;
+  int n_;
+  int pos_;
+};
+
+// This function is used to create a pthread that prefetches the window data.
+template <typename Dtype>
+void* WindowDataLayerPrefetch(void* layer_pointer);
+
+template <typename Dtype>
+class WindowDataLayer : public Layer<Dtype> {
+  // The function used to perform prefetching.
+  friend void* WindowDataLayerPrefetch<Dtype>(void* layer_pointer);
+
+ public:
+  explicit WindowDataLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~WindowDataLayer();
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_WINDOW_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+ protected:
+  virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {}
+
+  virtual void CreatePrefetchThread();
+  virtual void JoinPrefetchThread();
+  virtual unsigned int PrefetchRand();
+
+  shared_ptr<Caffe::RNG> prefetch_rng_;
+  pthread_t thread_;
+  shared_ptr<Blob<Dtype> > prefetch_data_;
+  shared_ptr<Blob<Dtype> > prefetch_label_;
+  Blob<Dtype> data_mean_;
+  vector<std::pair<std::string, vector<int> > > image_database_;
+  enum WindowField { IMAGE_INDEX, LABEL, OVERLAP, X1, Y1, X2, Y2, NUM };
+  vector<vector<float> > fg_windows_;
+  vector<vector<float> > bg_windows_;
+};
+
+}  // namespace caffe
+
+#endif  // CAFFE_DATA_LAYERS_HPP_

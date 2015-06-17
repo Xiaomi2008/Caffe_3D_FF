@@ -1,0 +1,14 @@
+input=uint16(D);
+i = single(input);
+filename=translatePath('z:\caffe_flx_kernel\result\truth.tif');
+t = Tiff(filename, 'w');
+t.setTag('ImageLength',size(input,1));
+t.setTag('ImageWidth',size(input,2));
+t.setTag('Photometric', Tiff.Photometric.MinIsBlack);
+t.setTag('Compression', Tiff.Compression.None);
+t.setTag('BitsPerSample',16 );
+t.setTag('PlanarConfiguration', Tiff.PlanarConfiguration.Chunky);
+t.setTag('SampleFormat',Tiff.SampleFormat.IEEEFP);
+%t.setTag('SamplesPerPixel', 3); 
+t.write(i);
+t.close();

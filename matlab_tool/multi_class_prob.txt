@@ -1,0 +1,648 @@
+layers{
+ name: "accuracy_1"
+ type:  ACCURACY
+ bottom: "fc8_1"
+ bottom: "L0"
+ top:    "accuracy_1"
+}
+
+layers{
+ name: "accuracy_2"
+ type:  ACCURACY
+ bottom: "fc8_2"
+ bottom: "L1"
+ top:    "accuracy_2"
+}
+
+layers{
+ name: "accuracy_3"
+ type:  ACCURACY
+ bottom: "fc8_3"
+ bottom: "L2"
+ top:    "accuracy_3"
+}
+
+layers{
+ name: "accuracy_4"
+ type:  ACCURACY
+ bottom: "fc8_4"
+ bottom: "L3"
+ top:    "accuracy_4"
+}
+
+layers{
+ name: "accuracy_5"
+ type:  ACCURACY
+ bottom: "fc8_5"
+ bottom: "L4"
+ top:    "accuracy_5"
+}
+
+layers{
+ name: "accuracy_6"
+ type:  ACCURACY
+ bottom: "fc8_6"
+ bottom: "L5"
+ top:    "accuracy_6"
+}
+
+layers{
+ name: "accuracy_7"
+ type:  ACCURACY
+ bottom: "fc8_7"
+ bottom: "L6"
+ top:    "accuracy_7"
+}
+
+layers{
+ name: "accuracy_8"
+ type:  ACCURACY
+ bottom: "fc8_8"
+ bottom: "L7"
+ top:    "accuracy_8"
+}
+
+layers{
+ name: "accuracy_9"
+ type:  ACCURACY
+ bottom: "fc8_9"
+ bottom: "L8"
+ top:    "accuracy_9"
+}
+
+layers{
+ name: "accuracy_10"
+ type:  ACCURACY
+ bottom: "fc8_10"
+ bottom: "L9"
+ top:    "accuracy_10"
+}
+
+layers{
+ name: "accuracy_11"
+ type:  ACCURACY
+ bottom: "fc8_11"
+ bottom: "L10"
+ top:    "accuracy_11"
+}
+
+layers{
+ name: "accuracy_12"
+ type:  ACCURACY
+ bottom: "fc8_12"
+ bottom: "L11"
+ top:    "accuracy_12"
+}
+
+layers{
+ name: "accuracy_13"
+ type:  ACCURACY
+ bottom: "fc8_13"
+ bottom: "L12"
+ top:    "accuracy_13"
+}
+
+layers{
+ name: "accuracy_14"
+ type:  ACCURACY
+ bottom: "fc8_14"
+ bottom: "L13"
+ top:    "accuracy_14"
+}
+
+layers{
+ name: "accuracy_15"
+ type:  ACCURACY
+ bottom: "fc8_15"
+ bottom: "L14"
+ top:    "accuracy_15"
+}
+
+layers{
+ name: "accuracy_16"
+ type:  ACCURACY
+ bottom: "fc8_16"
+ bottom: "L15"
+ top:    "accuracy_16"
+}
+
+layers{
+ name: "accuracy_17"
+ type:  ACCURACY
+ bottom: "fc8_17"
+ bottom: "L16"
+ top:    "accuracy_17"
+}
+
+layers{
+ name: "accuracy_18"
+ type:  ACCURACY
+ bottom: "fc8_18"
+ bottom: "L17"
+ top:    "accuracy_18"
+}
+
+layers{
+ name: "accuracy_19"
+ type:  ACCURACY
+ bottom: "fc8_19"
+ bottom: "L18"
+ top:    "accuracy_19"
+}
+
+layers{
+ name: "accuracy_20"
+ type:  ACCURACY
+ bottom: "fc8_20"
+ bottom: "L19"
+ top:    "accuracy_20"
+}
+
+layers{
+ name: "accuracy_21"
+ type:  ACCURACY
+ bottom: "fc8_21"
+ bottom: "L20"
+ top:    "accuracy_21"
+}
+
+layers{
+ name: "accuracy_22"
+ type:  ACCURACY
+ bottom: "fc8_22"
+ bottom: "L21"
+ top:    "accuracy_22"
+}
+
+layers{
+ name: "accuracy_23"
+ type:  ACCURACY
+ bottom: "fc8_23"
+ bottom: "L22"
+ top:    "accuracy_23"
+}
+
+layers{
+ name: "accuracy_24"
+ type:  ACCURACY
+ bottom: "fc8_24"
+ bottom: "L23"
+ top:    "accuracy_24"
+}
+
+layers{
+ name: "accuracy_25"
+ type:  ACCURACY
+ bottom: "fc8_25"
+ bottom: "L24"
+ top:    "accuracy_25"
+}
+
+layers{
+ name: "accuracy_26"
+ type:  ACCURACY
+ bottom: "fc8_26"
+ bottom: "L25"
+ top:    "accuracy_26"
+}
+
+layers{
+ name: "accuracy_27"
+ type:  ACCURACY
+ bottom: "fc8_27"
+ bottom: "L26"
+ top:    "accuracy_27"
+}
+
+layers{
+ name: "accuracy_28"
+ type:  ACCURACY
+ bottom: "fc8_28"
+ bottom: "L27"
+ top:    "accuracy_28"
+}
+
+layers{
+ name: "accuracy_29"
+ type:  ACCURACY
+ bottom: "fc8_29"
+ bottom: "L28"
+ top:    "accuracy_29"
+}
+
+layers{
+ name: "accuracy_30"
+ type:  ACCURACY
+ bottom: "fc8_30"
+ bottom: "L29"
+ top:    "accuracy_30"
+}
+
+layers{
+ name: "accuracy_31"
+ type:  ACCURACY
+ bottom: "fc8_31"
+ bottom: "L30"
+ top:    "accuracy_31"
+}
+
+layers{
+ name: "accuracy_32"
+ type:  ACCURACY
+ bottom: "fc8_32"
+ bottom: "L31"
+ top:    "accuracy_32"
+}
+
+layers{
+ name: "accuracy_33"
+ type:  ACCURACY
+ bottom: "fc8_33"
+ bottom: "L32"
+ top:    "accuracy_33"
+}
+
+layers{
+ name: "accuracy_34"
+ type:  ACCURACY
+ bottom: "fc8_34"
+ bottom: "L33"
+ top:    "accuracy_34"
+}
+
+layers{
+ name: "accuracy_35"
+ type:  ACCURACY
+ bottom: "fc8_35"
+ bottom: "L34"
+ top:    "accuracy_35"
+}
+
+layers{
+ name: "accuracy_36"
+ type:  ACCURACY
+ bottom: "fc8_36"
+ bottom: "L35"
+ top:    "accuracy_36"
+}
+
+layers{
+ name: "accuracy_37"
+ type:  ACCURACY
+ bottom: "fc8_37"
+ bottom: "L36"
+ top:    "accuracy_37"
+}
+
+layers{
+ name: "accuracy_38"
+ type:  ACCURACY
+ bottom: "fc8_38"
+ bottom: "L37"
+ top:    "accuracy_38"
+}
+
+layers{
+ name: "accuracy_39"
+ type:  ACCURACY
+ bottom: "fc8_39"
+ bottom: "L38"
+ top:    "accuracy_39"
+}
+
+layers{
+ name: "accuracy_40"
+ type:  ACCURACY
+ bottom: "fc8_40"
+ bottom: "L39"
+ top:    "accuracy_40"
+}
+
+layers{
+ name: "accuracy_41"
+ type:  ACCURACY
+ bottom: "fc8_41"
+ bottom: "L40"
+ top:    "accuracy_41"
+}
+
+layers{
+ name: "accuracy_42"
+ type:  ACCURACY
+ bottom: "fc8_42"
+ bottom: "L41"
+ top:    "accuracy_42"
+}
+
+layers{
+ name: "accuracy_43"
+ type:  ACCURACY
+ bottom: "fc8_43"
+ bottom: "L42"
+ top:    "accuracy_43"
+}
+
+layers{
+ name: "accuracy_44"
+ type:  ACCURACY
+ bottom: "fc8_44"
+ bottom: "L43"
+ top:    "accuracy_44"
+}
+
+layers{
+ name: "accuracy_45"
+ type:  ACCURACY
+ bottom: "fc8_45"
+ bottom: "L44"
+ top:    "accuracy_45"
+}
+
+layers{
+ name: "accuracy_46"
+ type:  ACCURACY
+ bottom: "fc8_46"
+ bottom: "L45"
+ top:    "accuracy_46"
+}
+
+layers{
+ name: "accuracy_47"
+ type:  ACCURACY
+ bottom: "fc8_47"
+ bottom: "L46"
+ top:    "accuracy_47"
+}
+
+layers{
+ name: "accuracy_48"
+ type:  ACCURACY
+ bottom: "fc8_48"
+ bottom: "L47"
+ top:    "accuracy_48"
+}
+
+layers{
+ name: "accuracy_49"
+ type:  ACCURACY
+ bottom: "fc8_49"
+ bottom: "L48"
+ top:    "accuracy_49"
+}
+
+layers{
+ name: "accuracy_50"
+ type:  ACCURACY
+ bottom: "fc8_50"
+ bottom: "L49"
+ top:    "accuracy_50"
+}
+
+layers{
+ name: "accuracy_51"
+ type:  ACCURACY
+ bottom: "fc8_51"
+ bottom: "L50"
+ top:    "accuracy_51"
+}
+
+layers{
+ name: "accuracy_52"
+ type:  ACCURACY
+ bottom: "fc8_52"
+ bottom: "L51"
+ top:    "accuracy_52"
+}
+
+layers{
+ name: "accuracy_53"
+ type:  ACCURACY
+ bottom: "fc8_53"
+ bottom: "L52"
+ top:    "accuracy_53"
+}
+
+layers{
+ name: "accuracy_54"
+ type:  ACCURACY
+ bottom: "fc8_54"
+ bottom: "L53"
+ top:    "accuracy_54"
+}
+
+layers{
+ name: "accuracy_55"
+ type:  ACCURACY
+ bottom: "fc8_55"
+ bottom: "L54"
+ top:    "accuracy_55"
+}
+
+layers{
+ name: "accuracy_56"
+ type:  ACCURACY
+ bottom: "fc8_56"
+ bottom: "L55"
+ top:    "accuracy_56"
+}
+
+layers{
+ name: "accuracy_57"
+ type:  ACCURACY
+ bottom: "fc8_57"
+ bottom: "L56"
+ top:    "accuracy_57"
+}
+
+layers{
+ name: "accuracy_58"
+ type:  ACCURACY
+ bottom: "fc8_58"
+ bottom: "L57"
+ top:    "accuracy_58"
+}
+
+layers{
+ name: "accuracy_59"
+ type:  ACCURACY
+ bottom: "fc8_59"
+ bottom: "L58"
+ top:    "accuracy_59"
+}
+
+layers{
+ name: "accuracy_60"
+ type:  ACCURACY
+ bottom: "fc8_60"
+ bottom: "L59"
+ top:    "accuracy_60"
+}
+
+layers{
+ name: "accuracy_61"
+ type:  ACCURACY
+ bottom: "fc8_61"
+ bottom: "L60"
+ top:    "accuracy_61"
+}
+
+layers{
+ name: "accuracy_62"
+ type:  ACCURACY
+ bottom: "fc8_62"
+ bottom: "L61"
+ top:    "accuracy_62"
+}
+
+layers{
+ name: "accuracy_63"
+ type:  ACCURACY
+ bottom: "fc8_63"
+ bottom: "L62"
+ top:    "accuracy_63"
+}
+
+layers{
+ name: "accuracy_64"
+ type:  ACCURACY
+ bottom: "fc8_64"
+ bottom: "L63"
+ top:    "accuracy_64"
+}
+
+layers{
+ name: "accuracy_65"
+ type:  ACCURACY
+ bottom: "fc8_65"
+ bottom: "L64"
+ top:    "accuracy_65"
+}
+
+layers{
+ name: "accuracy_66"
+ type:  ACCURACY
+ bottom: "fc8_66"
+ bottom: "L65"
+ top:    "accuracy_66"
+}
+
+layers{
+ name: "accuracy_67"
+ type:  ACCURACY
+ bottom: "fc8_67"
+ bottom: "L66"
+ top:    "accuracy_67"
+}
+
+layers{
+ name: "accuracy_68"
+ type:  ACCURACY
+ bottom: "fc8_68"
+ bottom: "L67"
+ top:    "accuracy_68"
+}
+
+layers{
+ name: "accuracy_69"
+ type:  ACCURACY
+ bottom: "fc8_69"
+ bottom: "L68"
+ top:    "accuracy_69"
+}
+
+layers{
+ name: "accuracy_70"
+ type:  ACCURACY
+ bottom: "fc8_70"
+ bottom: "L69"
+ top:    "accuracy_70"
+}
+
+layers{
+ name: "accuracy_71"
+ type:  ACCURACY
+ bottom: "fc8_71"
+ bottom: "L70"
+ top:    "accuracy_71"
+}
+
+layers{
+ name: "accuracy_72"
+ type:  ACCURACY
+ bottom: "fc8_72"
+ bottom: "L71"
+ top:    "accuracy_72"
+}
+
+layers{
+ name: "accuracy_73"
+ type:  ACCURACY
+ bottom: "fc8_73"
+ bottom: "L72"
+ top:    "accuracy_73"
+}
+
+layers{
+ name: "accuracy_74"
+ type:  ACCURACY
+ bottom: "fc8_74"
+ bottom: "L73"
+ top:    "accuracy_74"
+}
+
+layers{
+ name: "accuracy_75"
+ type:  ACCURACY
+ bottom: "fc8_75"
+ bottom: "L74"
+ top:    "accuracy_75"
+}
+
+layers{
+ name: "accuracy_76"
+ type:  ACCURACY
+ bottom: "fc8_76"
+ bottom: "L75"
+ top:    "accuracy_76"
+}
+
+layers{
+ name: "accuracy_77"
+ type:  ACCURACY
+ bottom: "fc8_77"
+ bottom: "L76"
+ top:    "accuracy_77"
+}
+
+layers{
+ name: "accuracy_78"
+ type:  ACCURACY
+ bottom: "fc8_78"
+ bottom: "L77"
+ top:    "accuracy_78"
+}
+
+layers{
+ name: "accuracy_79"
+ type:  ACCURACY
+ bottom: "fc8_79"
+ bottom: "L78"
+ top:    "accuracy_79"
+}
+
+layers{
+ name: "accuracy_80"
+ type:  ACCURACY
+ bottom: "fc8_80"
+ bottom: "L79"
+ top:    "accuracy_80"
+}
+
+layers{
+ name: "accuracy_81"
+ type:  ACCURACY
+ bottom: "fc8_81"
+ bottom: "L80"
+ top:    "accuracy_81"
+}
+

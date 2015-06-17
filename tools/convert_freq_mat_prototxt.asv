@@ -1,0 +1,7 @@
+freq_file='z:\caffe_flx_kernel\data\snems3d_class_freq.mat';
+protxt_file='z:\caffe_flx_kernel\models\snems3d_label_class_selection.protxt';
+load(freq_file);
+fid=fopen(protxt_file,'w');
+
+len
+fprintf(fid,'%.4f\t%.4f\n',control_points{k});

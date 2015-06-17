@@ -1,0 +1,72 @@
+//Caffe code structure notes:
+#1: Weight:
+	# get layer objects
+	const vector<shared_ptr<Layer<float> > >& layers = net_->layers();
+	# copy each'layers blobs: which are the weight for each layers
+	for (unsigned int i = 0; i < layers.size(); ++i) {
+	vector<shared_ptr<Blob<float> > >& layer_blobs   = layers[i]->blobs();}
+	
+	
+	
+#2: How to initialize a network
+	# 1. read network stucture from a serialized file
+	   #   defined  SolverParameter solver_param and call following to initialize object "solver_param"
+	   # instatialization is defined in io.hpp:
+	    SolverParameter solver_param;          //SolverParameter is defined in caffe.prob file
+	    ReadProtoFromTextFileOrDie(argv[1], &solver_param);
+		ReadProtoFromTextFile(const string& filename, Message* proto) {
+				return ReadProtoFromTextFile(filename.c_str(), proto);   # this will call google::protobuf::TextFormat::Parse(input, proto); which is google free code implemented for serializetion of objects
+				}
+	# the instaniated solver_param is used as input to following:
+	    SGDSolver<float> solver(solver_param);
+		# load pretained network
+		solver.net()->CopyTrainedLayersFrom(string(argv[2]));
+        solver.Solve();
+		
+	# solver initializetion
+	  Solver<Dtype>::Solver(const SolverParameter& param)
+     : net_() {
+        Init(param);
+		}
+		
+		#This Init will call net_.reset to init the net
+		if (param_.has_train_net_param()) {
+   
+				LOG(INFO) << "Creating training net specified in SolverParameter.";
+				net_.reset(new Net<Dtype>(param_.train_net_param()));
+			} else {	
+			  net_.reset(new Net<Dtype>(param_.train_net()));
+			}
+			
+			
+			#net_ is defined as shared_ptr<Net<Dtype> > net_; and it will call net_.init
+			
+	   # the param_.train_net() is a string indicated the train_net defining string
+			
+#3: Input data define as Datum in caffe.proto file, for which the c code is generated automatically by google proto #include "caffe/proto/caffe.pb.h"
+ message Datum {
+  optional int32 channels = 1;
+  optional int32 height = 2;
+  optional int32 width = 3;
+  // the actual image data, in bytes
+  optional bytes data = 4;
+  repeated int32 label = 5;
+  // Optionally, the datum could also hold float data.
+  repeated float float_data = 6;
+}
+
+
+# the datum will read the data from levelDB or LMDB
+  datum.ParseFromString(layer->iter_->value().ToString()); 
+  
+  
+ # So if we want to put multiple images into one records(as one input with multiple channels)
+ # we'd better change "Convert_imageset.cpp"
+ # therefor: change following code in convert_images.cpp in line 145 - 150
+ if (!ReadImageToDatum(root_folder + lines[line_id].first,
+        lines[line_id].second, resize_height, resize_width, is_color, &datum)) {
+      continue;}
+	  
+	  #Note that ReadImageToDatum is in io.cpp, we shoul give defined # of lines(images path) to this function and
+	  # this function should convert them into multiple channels to complie with Datum structure
+ 
