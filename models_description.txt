@@ -1,0 +1,14 @@
+Currently running:
+------------------
+ FeatureMapsCount|NumberOfClasses|     Model   |User
+-------------------------------------------------------
+    5		 | 401 		 |isbi12 model | Ahmed
+    3		 | 401		 |isbi12 model | Ahmed
+    1 		 | 2		 |isbi12 model | Ahmed
+    3		 | 50(fg only)	 |isbi12 model | Ahmed
+
+
+Previously tried:
+-----------------
+ FeatureMapsCount|NumberOfClasses|     Model   |User
+-------------------------------------------------------
