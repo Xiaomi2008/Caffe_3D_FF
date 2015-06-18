@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <leveldb/db.h>
 #include <pthread.h>
-
+//#include <mutex> 
 #include <string>
 #include <vector>
 #include <cmath> 
@@ -18,23 +18,44 @@
 using std::string;
 
 namespace caffe {
-
+//pthread_mutex_t c_mutex;
 template <typename Dtype>
 void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
-  //LOG(INFO)<<"start run prefectch thread ";
+ // LOG(INFO)<<"start run prefectch thread ";
   //printf("start run prefectch thread \n");
+ 
   CHECK(layer_pointer);
   ImageLabelDataLayer<Dtype>* layer = static_cast<ImageLabelDataLayer<Dtype>*>(layer_pointer);
   CHECK(layer);
+   
+  //mutex mtx;
+  
+ // layer_batch_info_struct<Dtype> *layer_batch_info 
+ // = static_cast<layer_batch_info_struct<Dtype> *>(layer_pointer);
+ // CHECK(layer_batch_info);
+ // ImageLabelDataLayer<Dtype>* layer =static_cast<ImageLabelDataLayer<Dtype>*>(layer_batch_info->layer_pointer);
+ 
+  
+  
+  //LOG(INFO)<<" item start : item end =" <<item_start <<" "<<item_end;
   //Datum datum;  
+  
+  
+  //c_mute
+ 
   CHECK(layer->prefetch_data_);
-  Dtype* top_data = layer->prefetch_data_->mutable_cpu_data();
+ // pthread_mutex_lock(&c_mutex);
+	Dtype* top_data = layer->prefetch_data_->mutable_cpu_data();
+  //pthread_mutex_unlock(&c_mutex);
   Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
-  int num_labels = 0;
+ // int num_labels = 0;
   if (layer->output_labels_) {
+   // pthread_mutex_lock(&c_mutex);
     top_label = layer->prefetch_label_->mutable_cpu_data();
-    //num_labels = layer->prefetch_label_->channels();
+	//pthread_mutex_unlock(&c_mutex);
   }
+  
+
   const Dtype scale = layer->layer_param_.image_label_data_param().scale();
   const int batch_size = layer->layer_param_.image_label_data_param().batch_size();
   //const int crop_size = layer->layer_param_.image_label_data_param().crop_size();
@@ -70,19 +91,35 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
   //const bool binary = layer->layer_param_.image_label_data_param().binary();
   //const int size = layer->datum_size_;
   //LOG(INFO)<<"current element label  size is: "<< out_label_size_h;
+  //pthread_mutex_lock(&c_mutex);
   const Dtype* mean = layer->data_mean_.cpu_data();
-  
+ // pthread_mutex_unlock(&c_mutex);
   //if (rand_patch_times>batch_size){rand_patch_times=batch_size;}
   
-  for (int item_id = 0; item_id < batch_size; ++item_id) {
+  //unsigned int item_start = layer_batch_info->batch_start;
+  //unsigned int item_end   = layer_batch_info->batch_end;
+  unsigned int item_start = 0;
+  unsigned int item_end   =  batch_size;
+  
+  //if(item_end >batch_size)
+  //   item_end =batch_size;
+	 
+ 
+  //for (int item_id = 0; item_id < batch_size; ++item_id) {
+  // LOG(INFO)<<" 101 line";
+  for (int item_id = item_start; item_id < item_end; ++item_id) {
     
 	if( layer->read_patch_times_%rand_patch_times==0){
 	     LOG(INFO)<<"reading new datum from LevelDB ...." <<"rand_patch_times =" <<rand_patch_times ;
+		 //pthread_mutex_lock(&c_mutex);
 	     layer->readNextDatums();
-		 layer->read_patch_times_=0;
+		// pthread_mutex_unlock(&c_mutex);
+		 layer->read_patch_times_=1;
 	}
 	int datum_idx = layer->read_patch_times_ % layer->num_memory_datums_;
+   // pthread_mutex_lock(&c_mutex);
 	layer->read_patch_times_++;
+   //pthread_mutex_unlock(&c_mutex);
     Datum& datum=layer->datums_[datum_idx];
     const string& data = datum.data();
 	//const string& elm_labels = datum.float_label();
@@ -115,6 +152,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 			w_off = prefech_w  % (width  - crop_size_w) ;//+(width - crop_size)/4;
 			d_off = prefech_d  % (depth  - crop_size_d) ;//+ (width - crop_size)/4;
 		}
+		
 		
 		label_h_off = h_off + (crop_size_h-out_label_size_h)/2;
 		label_w_off = w_off + (crop_size_w-out_label_size_w)/2;
@@ -315,38 +353,10 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 				
 		  }
     }
-    // go to the next iter
-	//LOG(INFO)<< "item_id = " <<item_id;
-	//if(item_id+1%rand_patch_times==0)
-	
-	
-	// if( layer->read_patch_times_%rand_patch_times==0){
-		// switch (layer->layer_param_.image_label_data_param().backend()) {
-		// case DataParameter_DB_LEVELDB:
-		  // layer->iter_->Next();
-		  // if (!layer->iter_->Valid()) {
-			// // We have reached the end. Restart from the first.
-			// DLOG(INFO) << "Restarting data prefetching from start.";
-			// layer->iter_->SeekToFirst();
-		  // }
-		  // break;
-		// case DataParameter_DB_LMDB:
-		  // if (mdb_cursor_get(layer->mdb_cursor_, &layer->mdb_key_,
-				  // &layer->mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
-			// // We have reached the end. Restart from the first.
-			// DLOG(INFO) << "Restarting data prefetching from start.";
-			// CHECK_EQ(mdb_cursor_get(layer->mdb_cursor_, &layer->mdb_key_,
-					// &layer->mdb_value_, MDB_FIRST), MDB_SUCCESS);
-		  // }
-		  // break;
-		// default:
-		  // LOG(FATAL) << "Unknown database backend";
-		// }
-		// layer->read_patch_times_=0;
-	// }
 	 
   }
-  //LOG(INFO)<<"done prefectch thread ";
+ // LOG(INFO)<<"done prefectch thread ";
+  //pthread_mutex_unlock(&c_mutex); 
   return static_cast<void*>(NULL);
 }
 
@@ -372,7 +382,7 @@ template <typename Dtype>
 void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   Layer<Dtype>::SetUp(bottom, top);
-  read_patch_times_ =0;
+  read_patch_times_ =1;
   if (top->size() == 2) {
     output_labels_ = true;
   } else {
@@ -457,6 +467,15 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   default:
     LOG(FATAL) << "Unknown database backend";
   }
+  
+  datum_channels_ 	= datum.channels();
+  datum_height_ 	= datum.height();
+  datum_width_ 		= datum.width();
+  datum_depth_ 		= datum.depth();
+  datum_size_ 		= datum.channels() * datum.height() * datum.width() * datum.depth();
+  
+  
+  
   // image
   is_crop_ =false;
   if (this->layer_param_.image_label_data_param().has_crop_size()){
@@ -482,7 +501,10 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   //int crop_size = this->layer_param_.image_label_data_param().crop_size();
   LOG(INFO) <<"Data layer input  batch_size is = "<<this->layer_param_.image_label_data_param().batch_size();
  // if (crop_size > 0)
-   if (is_crop_){
+   if (is_crop_){  
+	CHECK_GT(datum_height_, crop_size_h_);
+	CHECK_GT(datum_width_, crop_size_w_);
+	CHECK_GT(datum_depth_, crop_size_d_);
     (*top)[0]->Reshape(this->layer_param_.image_label_data_param().batch_size(),
                        datum.channels(), crop_size_h_, crop_size_w_, crop_size_d_);
 	// shared_ptr<Blob<Dtype> > prefetch_data_
@@ -490,12 +512,6 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
         this->layer_param_.image_label_data_param().batch_size(), datum.channels(),
         crop_size_h_, crop_size_w_, crop_size_d_));
   } else {
-    // (*top)[0]->Reshape(
-        // this->layer_param_.image_label_data_param().batch_size(), datum.channels(),
-        // datum.height(), datum.width());
-    // prefetch_data_.reset(new Blob<Dtype>(
-        // this->layer_param_.image_label_data_param().batch_size(), datum.channels(),
-        // datum.height(), datum.width()));
 		(*top)[0]->Reshape(
         this->layer_param_.image_label_data_param().batch_size(), datum.channels(),
         datum.height(), datum.width(), datum.depth());
@@ -510,9 +526,8 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   if (output_labels_) {
     //CHECK_GT(datum.label_size(), 0) << "Datum should contain labels for top";
 	if (this->layer_param_.image_label_data_param().has_out_label_size()){
-		out_label_size_h_ = this->layer_param_.image_label_data_param().out_label_size();
-		out_label_size_w_ = out_label_size_h_;
-		out_label_size_d_ = out_label_size_h_;
+		out_label_size_d_ =out_label_size_w_ = out_label_size_h_ 
+		= this->layer_param_.image_label_data_param().out_label_size();
 	}else{
 		out_label_size_h_ =this->layer_param_.image_label_data_param().out_label_size_h();
 		out_label_size_w_ =this->layer_param_.image_label_data_param().out_label_size_w();
@@ -529,16 +544,21 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
      prefetch_label_.reset(
         new Blob<Dtype>(this->layer_param_.image_label_data_param().batch_size(),
           1,  out_label_size_h_, out_label_size_w_, out_label_size_d_));
+	if(is_crop_)
+	{
+		CHECK_GE(crop_size_h_,out_label_size_h_);
+		CHECK_GE(crop_size_w_,out_label_size_w_);
+		CHECK_GE(crop_size_d_,out_label_size_d_);
+	}
+	    CHECK_GE(datum_height_,out_label_size_h_);
+		CHECK_GE(datum_width_,out_label_size_w_);
+		CHECK_GE(datum_depth_,out_label_size_d_);
+	
   }
   // datum size
-  datum_channels_ = datum.channels();
-  datum_height_ = datum.height();
-  datum_width_ = datum.width();
-  datum_depth_ = datum.depth();
-  datum_size_ = datum.channels() * datum.height() * datum.width() * datum.depth();
-  CHECK_GT(datum_height_, crop_size_h_);
-  CHECK_GT(datum_width_, crop_size_w_);
-  CHECK_GT(datum_depth_, crop_size_d_);
+ 
+  
+  
   // check if we want to have mean
   if (this->layer_param_.image_label_data_param().has_mean_file()) {
     const string& mean_file = this->layer_param_.image_label_data_param().mean_file();
@@ -560,24 +580,15 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   // simultaneous cudaMalloc calls when the main thread is running. In some
   // GPUs this seems to cause failures if we do not so.
   prefetch_data_->mutable_cpu_data();
-  if (output_labels_) {
+  if (output_labels_)
     prefetch_label_->mutable_cpu_data();
-  }
   
   
   num_memory_datums_= this->layer_param_.image_label_data_param().num_memory_datum();
-  datums_.resize(num_memory_datums_);
-  //prefetch_data_->mutable_gpu_data();
-  //if (output_labels_) {
-  //  prefetch_label_->mutable_gpu_data();
-  //}
-  
- 
-  
+  datums_.resize(num_memory_datums_); 
+  readNextDatums();
   data_mean_.cpu_data();
-  
   ProcessLabelSelectParam();
-  
   LOG(INFO) << "Initializing prefetch";
   CreatePrefetchThread();
   LOG(INFO) << "Prefetch initialized.";
@@ -645,7 +656,6 @@ void ImageLabelDataLayer<Dtype>::ReadLabelProbMappingFile(const string& source){
   ReadProtoFromTextFileOrDie(source, &lb_param);
   ignore_rest_of_label_ 				= 	lb_param.ignore_rest_of_label();
   rest_of_label_mapping_ 				= 	lb_param.rest_of_label_mapping();
-  //balancing_rest_of_label_ 				= 	lb_param.balancing_rest_of_label();
   rest_of_label_mapping_label_			=	lb_param.rest_of_label_mapping_label();
   rest_of_label_prob_					=	lb_param.rest_of_label_prob();
   num_labels_with_prob_  				= 	lb_param.label_prob_mapping_info_size();
@@ -784,45 +794,6 @@ void ImageLabelDataLayer<Dtype>::compute_label_skip_rate()
 				
 		}
 
-      // std::map<int,int>::iterator iterLBmap;
-      // for (iterLBmap = label_mapping_map_.begin(); iterLBmap !=label_mapping_map_.end(); ++iterLBmap) {
-				// //label_skip_rate_map_[iterProb->first] =ceil(iterProb->second*scale_factor);
-				// //LOG(INFO)<<"label_mapping_map_["<<iterLBmap->first<<"]=" <<label_mapping_map_[iterLBmap->first];
-				
-				
-		// }			
-	  // sleep(20);
-	 // vector<PAIR> label_prob_vec_all(label_prob_map_.begin(), label_prob_map_.end());  
- // sort(label_prob_vec_all.begin(), label_prob_vec_all.end(), CmpByValue()); //prob descend order;
-	  
-	  
-	 // if(!ignore_rest_of_label_ ){
-		  // for(int j=0; j<label_prob_vec_all.size();++j){
-			// label_skip_rate_map_[label_prob_vec_all[j].first]=ceil(label_prob_vec_all[j].second*scale_factor);
-			// LOG(INFO)<<"label_skip_rate_map_["<<label_prob_vec_all[j].first<<"]"<<label_skip_rate_map_[label_prob_vec_all[j].first];
-			// LOG(INFO)<<"label "<<j<<"prob= "<<label_prob_vec_all[j].second;
-			// }
-			
-			// // for (auto iter = label_mapping_map_.begin(); iter !=label_mapping_map_.end(); ++iter) {
-				// // iter->second =ceil(iter.second*scale_factor);
-			// // }
-	  // }
-	 // else{
-		   // for(int j=0; j<num_top_label_balance_;++j)
-		   // {
-			// label_skip_rate_map_[label_prob_vec_all[j].first]=ceil(label_prob_vec_all[j].second*scale_factor);
-			// LOG(INFO)<<"label_skip_rate_map_ ["<<label_prob_vec_all[j].first <<"]="<< label_skip_rate_map_[label_prob_vec_all[j].first];
-			// }
-		   
-		   // for(int j=num_top_label_balance_; j<label_prob_vec_all.size();++j){
-		    
-			// label_skip_rate_map_[label_prob_vec_all[j].first]=label_prob_vec_all[j].second;
-			// LOG(INFO)<<"label_skip_rate_map_ ["<<label_prob_vec_all[j].first <<"]="<< label_skip_rate_map_[label_prob_vec_all[j].first];
-		   // }
-		   // //sleep(20);
-		 // }
-		 
-	
 }
 
 
@@ -852,6 +823,24 @@ int  ImageLabelDataLayer<Dtype>::get_converted_label(const int label){
 }
 
 
+template <typename Dtype>
+unsigned int ImageLabelDataLayer<Dtype>::PrefetchRand() {
+  CHECK(prefetch_rng_);
+  caffe::rng_t* prefetch_rng =
+      static_cast<caffe::rng_t*>(prefetch_rng_->generator());
+  return (*prefetch_rng)();
+}
+
+
+
+template <typename Dtype>
+void ImageLabelDataLayer<Dtype>::JoinPrefetchThread() {
+  //CHECK(!pthread_join(thread_, NULL)) << "Pthread joining failed.";
+  for(int i=0 ; i<threads_vec_.size();++i)
+  {
+	CHECK(!pthread_join(threads_vec_[i], NULL)) << "Pthread joining failed.";
+  }
+}
 
 
 template <typename Dtype>
@@ -871,10 +860,47 @@ void ImageLabelDataLayer<Dtype>::CreatePrefetchThread() {
   } else {
     prefetch_rng_.reset();
   }
+  
+   CHECK(!pthread_create(&thread_, NULL, ImageLabelDataLayerPrefetch<Dtype>,
+        static_cast<void*>(this))) << "Pthread execution failed.";
+  
   // Create the thread.
   //LOG(INFO)<<"create prefectch thread";
-  CHECK(!pthread_create(&thread_, NULL, ImageLabelDataLayerPrefetch<Dtype>,
-        static_cast<void*>(this))) << "Pthread execution failed.";
+  
+  //CreatePrefetchThread() muliple threads.
+   // threads_vec_.clear();
+   // layer_batchs_.clear();
+   // int batch_size =this->layer_param_.image_label_data_param().batch_size();
+   // int thread_num =1;
+   // int par_batch_length =batch_size/thread_num;
+   // int reminder   = batch_size%thread_num;
+   // layer_batch_info_struct<Dtype> lbis;
+  // for(int i=0;i<thread_num;++i){
+	  // pthread_t thread_1;
+	  // lbis.layer_pointer =this;
+	  // lbis.batch_start   =i*par_batch_length;
+	  // lbis.batch_end     =lbis.batch_start+par_batch_length;
+	  // layer_batchs_.push_back(lbis);
+	  // threads_vec_.push_back(thread_1);	  
+	// }
+  // if(reminder >0)
+    // {
+      // pthread_t thread_1;
+	  // lbis.layer_pointer =this;
+	  // lbis.batch_start   =thread_num*par_batch_length;
+	  // lbis.batch_end     =batch_size;
+	  // layer_batchs_.push_back(lbis);
+	  // threads_vec_.push_back(thread_1);	  
+    // }
+  
+	// for(int i=0;i<threads_vec_.size();++i)
+	// {
+		// CHECK(!pthread_create(&threads_vec_[i], NULL, ImageLabelDataLayerPrefetch<Dtype>,
+			// static_cast<void*>(&layer_batchs_[i]))) << "Pthread execution failed.";	
+			// //sleep(0.01);
+	// }
+
+
 }
 
 
@@ -882,7 +908,7 @@ template <typename Dtype>
 Dtype ImageLabelDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   // First, join the thread
-  LOG(INFO)<<"start forwarding data cd .....";
+   //LOG(INFO)<<"start forwarding data cd .....";
   JoinPrefetchThread();
   
   // Copy the data
@@ -895,22 +921,9 @@ Dtype ImageLabelDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom
                (*top)[1]->mutable_cpu_data());
   }
   //LOG(INFO)<<"label copyied from prefech.....";
-  // Start a new prefetch thread
+ // LOG(INFO)<<"Start a new prefetch thread";
   CreatePrefetchThread();
   return Dtype(0.);
-}
-
-template <typename Dtype>
-void ImageLabelDataLayer<Dtype>::JoinPrefetchThread() {
-  CHECK(!pthread_join(thread_, NULL)) << "Pthread joining failed.";
-}
-
-template <typename Dtype>
-unsigned int ImageLabelDataLayer<Dtype>::PrefetchRand() {
-  CHECK(prefetch_rng_);
-  caffe::rng_t* prefetch_rng =
-      static_cast<caffe::rng_t*>(prefetch_rng_->generator());
-  return (*prefetch_rng)();
 }
 
 INSTANTIATE_CLASS(ImageLabelDataLayer);

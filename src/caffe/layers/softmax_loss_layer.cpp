@@ -78,7 +78,7 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 		// the input label value is minused by 1.
 		//if (m_label>=0){  //for multilabel case, the code is modified by Tao Zeng 12/17/2014. we only count loss on the label    that is greater than /equal to zero . 
 		      //if (label[i]!=0)
-				//LOG(INFO)<<"label in loss is " <<label[i];
+			//	LOG(INFO)<<"label in loss is " <<label[i];
 			loss += -log(max(prob_data[i * dim + static_cast<int>(label[i])],
 							 Dtype(FLT_MIN)));
 			//			 }
@@ -88,7 +88,6 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 			//			 }
 		//}
 	  }
-	  sleep(4);
   
   }
   loss=loss/num;//(outer_num*inner_num);

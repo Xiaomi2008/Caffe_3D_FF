@@ -90,6 +90,13 @@ class DataLayer : public Layer<Dtype> {
 };
 
 template <typename Dtype>
+struct layer_batch_info_struct {
+    Layer<Dtype>* layer_pointer;
+    unsigned int  batch_start;
+	unsigned int  batch_end;
+};
+
+template <typename Dtype>
 void* ImageLabelDataLayerPrefetch(void* layer_pointer);
 
 template <typename Dtype>
@@ -169,6 +176,11 @@ class ImageLabelDataLayer : public Layer<Dtype> {
   bool is_crop_;
   
   pthread_t thread_;
+  vector<pthread_t> threads_vec_;
+  
+  vector<layer_batch_info_struct<Dtype> > layer_batchs_;
+  
+  
   shared_ptr<Blob<Dtype> > prefetch_data_;
   shared_ptr<Blob<Dtype> > prefetch_label_;
   Blob<Dtype> data_mean_;
@@ -177,20 +189,18 @@ class ImageLabelDataLayer : public Layer<Dtype> {
   std::map <int, unsigned int> label_skip_rate_map_;
   std::map <int, int> label_mapping_map_;
   
-  unsigned int num_labels_;
+  unsigned  int num_labels_;
   unsigned  int num_labels_with_prob_ ;
   bool  balancing_label_;
   unsigned int num_top_label_balance_;
   bool  rest_of_label_mapping_;
   bool  map2order_label_;
- // bool  balancing_rest_of_label_;
   bool  ignore_rest_of_label_;
   int   rest_of_label_mapping_label_;
   float rest_of_label_prob_;
-  
-  
   Caffe::Phase phase_;
 };
+
 
 
 
