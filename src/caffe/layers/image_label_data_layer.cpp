@@ -100,7 +100,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
   //unsigned int item_end   = layer_batch_info->batch_end;
   unsigned int item_start = 0;
   unsigned int item_end   =  batch_size;
-  
+  int  label_size =layer->prefetch_label_->depth()*layer->prefetch_label_->width()*layer->prefetch_label_->height();
   //if(item_end >batch_size)
   //   item_end =batch_size;
 	 
@@ -114,17 +114,19 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 		 //pthread_mutex_lock(&c_mutex);
 	     layer->readNextDatums();
 		// pthread_mutex_unlock(&c_mutex);
-		 layer->read_patch_times_=1;
+		 layer->read_patch_times_=0;
 	}
 	int datum_idx = layer->read_patch_times_ % layer->num_memory_datums_;
    // pthread_mutex_lock(&c_mutex);
 	layer->read_patch_times_++;
    //pthread_mutex_unlock(&c_mutex);
+   //LOG(INFO)<<"layer->datums_"<< datum_idx<< " "; ;
     Datum& datum=layer->datums_[datum_idx];
     const string& data = datum.data();
 	//const string& elm_labels = datum.float_label();
 	int label_h_off, label_w_off, label_d_off;
 	label_h_off=label_w_off=label_d_off=0;
+	//LOG(INFO)<<"layer->datums_"<< datum_idx<< " "; ;
     //if (crop_size) {
 	if (is_crop) {
       CHECK(data.size()) << "Image cropping only support uint8 data";
@@ -186,9 +188,17 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 							//	top_label[top_index] = 1;
 							//else
 								//top_label[top_index] = datum_element;
-								 accept_label=layer->accept_given_label(datum_element);
+								
+							if(layer->balancing_label_)
+							{
+							  accept_label=layer->accept_given_label(datum_element);
 							  if(accept_label)
 									top_label[top_index] = layer->get_converted_label(datum_element);
+							}
+							else
+							 {
+							     top_label[top_index]  =datum_element;
+							 }
 						}
 					}
 				  }
@@ -209,9 +219,25 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 						 // Dtype datum_element =
 							//  static_cast<Dtype>(static_cast<float_t>(elm_labels[data_index]));
 							  Dtype datum_element = static_cast<Dtype>(static_cast<float_t>(datum.float_label(data_index)));
+							  
+							if(layer->balancing_label_)
+							{
 							  accept_label=layer->accept_given_label(datum_element);
 							  if(accept_label)
 									top_label[top_index] = layer->get_converted_label(datum_element);
+							}
+							else
+							 {
+							     top_label[top_index]  =datum_element;
+							 }
+							  
+							  
+							  // accept_label=layer->accept_given_label(datum_element);
+							  // if(accept_label){
+									// top_label[top_index] = layer->get_converted_label(datum_element);
+									// LOG(INFO)<<"try to convert label  " << datum_element;
+									// }
+									
 								//if(layer->rest_of_label_mapping_ && accept_label) 
 								//	top_label[top_index] = layer->get_converted_label(datum_element);
 						}
@@ -222,8 +248,8 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 		   
 		}
 		
-		if (layer->phase_ == Caffe::TEST) { break;}
-		if(layer->prefetch_label_->depth()*layer->prefetch_label_->width()*layer->prefetch_label_->height()>1){break;}
+		//if (layer->phase_ == Caffe::TEST) { break;}
+		if(label_size>1){break;}
 		
 		//if(accept_label) break;
 		//int skip_rate= layer->layer_param_.image_label_data_param().background_skip_rate();
@@ -382,7 +408,7 @@ template <typename Dtype>
 void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   Layer<Dtype>::SetUp(bottom, top);
-  read_patch_times_ =1;
+  read_patch_times_ =0;
   if (top->size() == 2) {
     output_labels_ = true;
   } else {
@@ -586,7 +612,7 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   
   num_memory_datums_= this->layer_param_.image_label_data_param().num_memory_datum();
   datums_.resize(num_memory_datums_); 
-  readNextDatums();
+  //readNextDatums();
   data_mean_.cpu_data();
   ProcessLabelSelectParam();
   LOG(INFO) << "Initializing prefetch";
@@ -602,11 +628,14 @@ void ImageLabelDataLayer<Dtype>::readNextDatums(){
 				  
 				  if (!iter_->Valid()) {
 					// We have reached the end. Restart from the first.
-					DLOG(INFO) << "Restarting data prefetching from start.";
+					LOG(INFO) << "Restarting data prefetching from start.";
 					iter_->SeekToFirst();
 				  }
-				  datums_[i].ParseFromString(iter_->value().ToString());
+				// LOG(INFO)<<"data parsing ["<<i<<"]";
+				  datums_[i].ParseFromString(iter_->value().ToString()); 
+				 /// LOG(INFO)<<"data parsed";
 				  iter_->Next();
+				 // LOG(INFO)<<"iter->next";
 			  }
 		  break;
 		case DataParameter_DB_LMDB:
@@ -835,11 +864,11 @@ unsigned int ImageLabelDataLayer<Dtype>::PrefetchRand() {
 
 template <typename Dtype>
 void ImageLabelDataLayer<Dtype>::JoinPrefetchThread() {
-  //CHECK(!pthread_join(thread_, NULL)) << "Pthread joining failed.";
-  for(int i=0 ; i<threads_vec_.size();++i)
-  {
-	CHECK(!pthread_join(threads_vec_[i], NULL)) << "Pthread joining failed.";
-  }
+  CHECK(!pthread_join(thread_, NULL)) << "Pthread joining failed.";
+  // for(int i=0 ; i<threads_vec_.size();++i)
+  // {
+	// CHECK(!pthread_join(threads_vec_[i], NULL)) << "Pthread joining failed.";
+  // }
 }
 
 

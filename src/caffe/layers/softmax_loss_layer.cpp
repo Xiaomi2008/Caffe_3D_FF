@@ -43,7 +43,7 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   
   size_t outer_num = bottom[0]->num();
   size_t inner_num = bottom[0]->height()*bottom[0]->width()*bottom[0]->depth();
-  
+  size_t channels  = bottom[0]->channels();
   size_t dims=prob_.count() / outer_num;
   size_t num = prob_.num();
   size_t dim = prob_.count() / num;
@@ -51,8 +51,8 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   Dtype loss = 0;
   //LOG(INFO)<< "softmax loss layer prob num ="<<num<< " Dim ="<<dim<<  "  count ="<<prob_.count() <<"  FLT_MIN ="<<FLT_MIN //<<"  FLT_MAX ="<< FLT_MAX;
   
-  int count = 0;
- if (bottom[1]->count()/outer_num>1){
+  size_t count = 0;
+ if (inner_num>1){
 	  for (size_t i = 0; i < outer_num; ++i) {
 		for (size_t j = 0; j < inner_num; j++) {
 		  const int label_value = static_cast<int>(label[i * inner_num + j]);
@@ -60,8 +60,8 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 		  //  continue;
 		  //}
 		 // LOG(INFO)<<"label in loss is " <<label_value;
-		  DCHECK_GE(label_value, 0);
-		  DCHECK_LT(label_value, prob_.channels());
+		  CHECK_GE(label_value, 0);
+		  CHECK_LT(label_value, prob_.channels());
 		  loss -= log(std::max(prob_data[i * dims + label_value * inner_num + j],
 							   Dtype(FLT_MIN)));
 		  ++count;
@@ -73,13 +73,17 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   else{
 	  for (size_t i = 0; i < num; ++i) {
 	   
-		int m_label=static_cast<int>(label[i]); // current data's multi class is represent from 0-n , where 0 means such label
+		const int label_value=static_cast<int>(label[i]); 
+		// current data's multi class is represent from 0-n , where 0 means such label
 		//is not exist, and 1-n represents the #class n-1, Therefore, to comptibale with softmax which count class from 0:n-1
 		// the input label value is minused by 1.
 		//if (m_label>=0){  //for multilabel case, the code is modified by Tao Zeng 12/17/2014. we only count loss on the label    that is greater than /equal to zero . 
 		      //if (label[i]!=0)
-			//	LOG(INFO)<<"label in loss is " <<label[i];
-			loss += -log(max(prob_data[i * dim + static_cast<int>(label[i])],
+		//	LOG(INFO)<<"label in loss is " <<label[i];
+			
+		   CHECK_GE(label_value, 0);
+		   CHECK_LT(label_value, prob_.channels());
+			loss += -log(max(prob_data[i * dim + label_value],
 							 Dtype(FLT_MIN)));
 			//			 }
 			
@@ -88,6 +92,7 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 			//			 }
 		//}
 	  }
+	  //sleep(2);
   
   }
   loss=loss/num;//(outer_num*inner_num);
@@ -106,6 +111,12 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   //return loss / num;
    return loss;
 }
+
+typedef std::pair<int, float> PAIR;
+struct CmpByValue {
+  bool operator()(const PAIR& lhs, const PAIR& rhs)
+  {return lhs.second > rhs.second;}
+ };
 
 template <typename Dtype>
 void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
@@ -130,9 +141,8 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
 		const Dtype* prob_data = prob_.cpu_data();
 		const Dtype* label = (*bottom)[1]->cpu_data();
-		// CHECK_EQ(outer_num*inner_num,)
-    if((*bottom)[1]->count()<2)
-	{
+    if(inner_num <2)
+	{     //LOG(INFO)<<"loss inner_num ="<<inner_num;
 		//Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
 		//const Dtype* prob_data = prob_.cpu_data();
 		caffe_copy(prob_.count(), prob_data, bottom_diff);
@@ -144,15 +154,40 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		}
 		// Scale down gradient
 		caffe_scal(prob_.count(), Dtype(1) / num, bottom_diff);
-		}
+	}
 	else{
 
-		
+		//LOG(INFO)<<"loss inner_num ="<<inner_num;
 		caffe_copy(prob_.count(), prob_data, bottom_diff);
 		//const Dtype* label = (*bottom)[1]->cpu_data();
 		size_t dim = prob_.count() / outer_num;
 		size_t count = 0;
+		
+		float heigh_v =0;
+		int heigh_freq_lb=0;
 		for (size_t i = 0; i < outer_num; ++i) {
+		   std::map<int,float> label_freq;
+		   std::map<int,float>::iterator it;
+		   for (size_t j = 0; j < inner_num; ++j){
+		      //label_freq[label_value]=0;
+			  const int label_value = static_cast<int>(label[i * inner_num + j]);
+			  label_freq[label_value]=0;
+			  //label_freq[label_value]++;
+		   }
+		   
+		   for (size_t j = 0; j < inner_num; ++j){
+				const int label_value = static_cast<int>(label[i * inner_num + j]);
+			  label_freq[label_value]++;
+		   }
+		   
+		   //vector<PAIR> label_freq_vec(label_freq.begin(), label_freq.end());  
+			//sort(label_freq_vec.begin(), label_freq_vec.end(), CmpByValue());
+		   //int low_lb= label_freq[label_freq.size()-1].first;
+		   //float low_freq =label_freq[label_freq.size()-1].second;
+		   //find highest freq label in patch; 
+		  
+		 
+			   
 		  for (size_t j = 0; j < inner_num; ++j) {
 			const int label_value = static_cast<int>(label[i * inner_num + j]);
 			//if (has_ignore_label_ && label_value == ignore_label_) {
@@ -160,7 +195,31 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 			 //   bottom_diff[i * dim + c * inner_num_ + j] = 0;
 			 // }
 		   // } else {
-			  bottom_diff[i * dims + label_value * inner_num + j] -= 1;
+		       Dtype lb_diff =bottom_diff[i * dims + label_value * inner_num + j]-1;
+		       bottom_diff[i * dims + label_value * inner_num + j] =lb_diff;
+			   for(it = label_freq.begin();it !=label_freq.end();it++){
+		          int    lb				=it->first;
+				  if(lb==label_value) continue;
+				  float freq_prob		=it->second/inner_num;
+				  Dtype prob_diff 		= bottom_diff[i * dims + lb * inner_num + j]-1;
+				  bottom_diff[i * dims + lb * inner_num + j] =prob_diff*freq_prob*(0-lb_diff);
+		  	   }
+			  
+		      // for(int k=0;k<label_freq.size();++k)
+			  // {
+			     // int lb= label_freq[k].first;
+				
+				 // bottom_diff[i * dims + lb * inner_num + j] =prob_diff *
+			  // }
+			  
+		      
+		      // Dtype dif_m =bottom_diff[i * dims + heigh_freq_lb * inner_num + j] -1;
+			  // Dtype dif_lb =bottom_diff[i * dims + label_value * inner_num + j] -1;
+			  // bottom_diff[i * dims + heigh_freq_lb * inner_num + j]=dif_m*dif_lb;
+			  // bottom_diff[i * dims + label_value * inner_num + j] =dif_lb;
+			  
+		      //bottom_diff[i * dims + heigh_freq_lb * inner_num + j] -= 1;
+			  //bottom_diff[i * dims + label_value * inner_num + j] -= 1;
 			  ++count;
 			}
 		  }
