@@ -45,46 +45,10 @@ int feature_extraction_pipeline(int argc, char** argv) {
   string mean_file;
   
   arg_pos = num_required_args;
-  if (argc > arg_pos && strcmp(argv[arg_pos], "GPU") == 0) {
-    LOG(ERROR)<< "Using GPU";
-    uint device_id = 0;
-	
-    // if (argc > arg_pos + 1) {
-      // device_id = atoi(argv[arg_pos + 1]);
-      // CHECK_GE(device_id, 0);
-    // }
-	 arg_pos++;
-	 if (argc > arg_pos) {
-        device_id = atoi(argv[arg_pos]);
-        CHECK_GE(device_id, 0);
-      }
-	 arg_pos++;
-    LOG(ERROR) << "Using Device_id=" << device_id;
-    Caffe::SetDevice(device_id);
-    Caffe::set_mode(Caffe::GPU);
-	
-  } else {
-    LOG(ERROR) << "Using CPU";
-    Caffe::set_mode(Caffe::CPU);
-	 if(argc > arg_pos){mean = atof(argv[arg_pos + 1]);}
-  }
-  
-  if(argc>arg_pos){
-		if(strcmp(argv[arg_pos], "MEAN_FILE") == 0){
-			
-			arg_pos++;
-			useMeanFile =true;
-			mean_file=argv[arg_pos];
-		}else if (strcmp(argv[arg_pos], "MEAN_VALUE") == 0){
-		    arg_pos++;
-            if(argc > arg_pos)			
-			mean = atof(argv[arg_pos]);
-		}
-	}
+   
   
   
-  
-  Caffe::set_phase(Caffe::TEST);
+ 
 
   arg_pos = 0;  // the name of the executable
   string source_DB_name(argv[++arg_pos]);
@@ -111,8 +75,50 @@ int feature_extraction_pipeline(int argc, char** argv) {
   string out_put_db_name(argv[++arg_pos]);
   LOG(INFO)<<predict_blob_name;
   
+  if (argc > arg_pos && strcmp(argv[++arg_pos], "GPU") == 0) {
+    LOG(ERROR)<< "Using GPU";
+    uint device_id = 0;
+	
+    // if (argc > arg_pos + 1) {
+      // device_id = atoi(argv[arg_pos + 1]);
+      // CHECK_GE(device_id, 0);
+    // }
+	// arg_pos++;
+	 if (argc > arg_pos) {
+        device_id = atoi(argv[++arg_pos]);
+        CHECK_GE(device_id, 0);
+      }
+	 //arg_pos++;
+    LOG(ERROR) << "Using Device_id=" << device_id;
+    Caffe::SetDevice(device_id);
+    Caffe::set_mode(Caffe::GPU);
+	
+  } else {
+    LOG(ERROR) << "Using CPU";
+    Caffe::set_mode(Caffe::CPU);
+	 //if(argc > arg_pos){mean = atof(argv[arg_pos + 1]);}
+  }
+   Caffe::set_phase(Caffe::TEST);
+  
+  //if(argc>arg_pos){
+		if(strcmp(argv[++arg_pos], "MEAN_FILE") == 0){
+			
+			//arg_pos++;
+			useMeanFile =true;
+			mean_file=argv[arg_pos];
+		}else if (strcmp(argv[++arg_pos], "MEAN_VALUE") == 0){
+		    //arg_pos++;
+            if(argc > arg_pos)			
+			mean = atof(argv[arg_pos]);
+		}
+	//}
+	
+  
+  
+  
   int soft_max_predict =atoi(argv[++arg_pos]);
-  //sleep(10);
+  LOG(INFO)<<"soft_max_predict :  "<<soft_max_predict;
+  sleep(10);
   //string predict_blob_name(argv[++arg_pos]);
 
  
