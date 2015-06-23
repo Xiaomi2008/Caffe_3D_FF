@@ -30,6 +30,12 @@ Dtype ImageLabelDataLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom
     caffe_copy(prefetch_label_->count(), prefetch_label_->cpu_data(),
         (*top)[1]->mutable_gpu_data());
   }
+  
+  if(output_single_label_){
+	 caffe_copy(prefetch_single_label_->count(), prefetch_single_label_->cpu_data(),
+               (*top)[2]->mutable_gpu_data());
+  }
+  
   CreatePrefetchThread();
  //  LOG(INFO)<<"after  create thread";
   return Dtype(0.);

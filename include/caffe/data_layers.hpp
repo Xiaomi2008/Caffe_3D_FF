@@ -116,7 +116,7 @@ class ImageLabelDataLayer : public Layer<Dtype> {
   }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
-  virtual inline int MaxTopBlobs() const { return 2; }
+  virtual inline int MaxTopBlobs() const { return 3; }
 
  protected:
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -173,6 +173,7 @@ class ImageLabelDataLayer : public Layer<Dtype> {
   int read_patch_times_; 
   
   bool output_labels_;
+  bool output_single_label_;
   bool is_crop_;
   
   pthread_t thread_;
@@ -183,6 +184,8 @@ class ImageLabelDataLayer : public Layer<Dtype> {
   
   shared_ptr<Blob<Dtype> > prefetch_data_;
   shared_ptr<Blob<Dtype> > prefetch_label_;
+  shared_ptr<Blob<Dtype> > prefetch_single_label_;
+  
   Blob<Dtype> data_mean_;
   
   std::map <int, float> label_prob_map_;
@@ -347,9 +350,11 @@ class ImageDataLayer : public Layer<Dtype> {
   pthread_t thread_;
   shared_ptr<Blob<Dtype> > prefetch_data_;
   shared_ptr<Blob<Dtype> > prefetch_label_;
+ 
   Blob<Dtype> data_mean_;
   Caffe::Phase phase_;
-  bool output_labels_;
+  bool output_labels_; 
+
 };
 
 /* MemoryDataLayer

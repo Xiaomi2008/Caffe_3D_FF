@@ -21,7 +21,7 @@ namespace caffe {
 //pthread_mutex_t c_mutex;
 template <typename Dtype>
 void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
- // LOG(INFO)<<"start run prefectch thread ";
+  //LOG(INFO)<<"start run prefectch thread ";
   //printf("start run prefectch thread \n");
  
   CHECK(layer_pointer);
@@ -100,7 +100,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
   //unsigned int item_end   = layer_batch_info->batch_end;
   unsigned int item_start = 0;
   unsigned int item_end   =  batch_size;
-  int  label_size =layer->prefetch_label_->depth()*layer->prefetch_label_->width()*layer->prefetch_label_->height();
+  size_t  label_size =layer->prefetch_label_->depth()*layer->prefetch_label_->width()*layer->prefetch_label_->height();
   //if(item_end >batch_size)
   //   item_end =batch_size;
 	 
@@ -131,23 +131,25 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 	if (is_crop) {
       CHECK(data.size()) << "Image cropping only support uint8 data";
       int h_off, w_off, d_off;
-	  
-      // We only do random crop when we do training.
-     // if (layer->phase_ == Caffe::TRAIN) {
-	 
-	 
-	  // bool bg_class_rate_meet = false;
-	  // if (layer->phase_ == Caffe::TEST)
-	  bool accept_label =false;
+	  bool accept_label 	=false;
+	  bool do_mirror    	=false;
+	  int mirro_dimention   =1; // 0=  h mirro, 1= w mirro, 2= d mirro
 	  do{
 	  int prefech_h = abs(layer->PrefetchRand());
 	  int prefech_w = abs(layer->PrefetchRand());
 	  int prefech_d = abs(layer->PrefetchRand());		
 		if(padding)
 		{
-			h_off = prefech_h  % height - crop_size_h/2;// +(height - crop_size)/4;
-			w_off = prefech_w  % width  - crop_size_w/2 ;//+(width - crop_size)/4;
-			d_off = prefech_d  % depth  - crop_size_d/2 ;//+ (width - crop_size)/4;
+		    if(layer->output_labels_){
+				h_off = prefech_h  % (height-out_label_size_h/2) - (crop_size_h- out_label_size_h)/2;
+				w_off = prefech_w  % (width -out_label_size_w/2)  - (crop_size_w- out_label_size_w)/2 ;
+				d_off = prefech_d  % (depth -out_label_size_d/2)  - (crop_size_d - out_label_size_d)/2 ;
+			
+			}else{
+				h_off = prefech_h  % height - crop_size_h/2;
+				w_off = prefech_w  % width  - crop_size_w/2 ;
+				d_off = prefech_d  % depth  - crop_size_d/2 ;
+			}
 
 		}else{
 			h_off = prefech_h  % (height - crop_size_h);// +(height - crop_size)/4;
@@ -160,43 +162,48 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 		label_w_off = w_off + (crop_size_w-out_label_size_w)/2;
 		label_d_off = d_off + (crop_size_d-out_label_size_d)/2;
 		
-		
-		
-		//LOG(INFO)<<" p_h " <<prefech_h << "   p_w "<<prefech_w<<"  p_d "<<prefech_d;
-		//LOG(INFO)<<" datum_h " <<height << "   datum_w "<<width<<"  datum_d "<<depth;
-		//LOG(INFO)<<" h_off " <<h_off << "   w_off "<<w_off<<"  d_off "<<d_off;
-		//LOG(INFO)<<" label_h_off " <<label_h_off << "   label_w_off "<<label_w_off<<"  label_d_off "<<label_d_off;
-	 
+	do_mirror=(mirror && layer->PrefetchRand() % 2);
+	mirro_dimention=layer->PrefetchRand() % 3;
 	if (layer->output_labels_){
-      if (mirror && layer->PrefetchRand() % 2) {
+      //if (mirror && layer->PrefetchRand() % 2) {
+	  if(do_mirror){
         // Copy mirrored version
-		
+		        size_t top_index=0;
 				for (size_t c = 0; c < 1; ++c) {
 				  for (size_t h = 0; h < out_label_size_h; ++h) {
 					for (size_t w = 0; w < out_label_size_w; ++w) {
 						for (size_t d = 0; d < out_label_size_d; ++d){
-						 // int top_index = ((item_id * channels + c) * crop_size + h)
-						 //				  * crop_size + w;
-						  size_t top_index = (((item_id * 1 + c) * out_label_size_h + h)
+						  switch(mirro_dimention){
+						  case 0:
+						  top_index = (((item_id * 1 + c) * out_label_size_h + h)
 										  * out_label_size_w + (out_label_size_w - 1 - w)) *out_label_size_d +d;
+										break;
+						  case 1:
+						  top_index = (((item_id * 1 + c) * out_label_size_h + 
+												(out_label_size_h - 1 - h))
+												* out_label_size_w + w) *out_label_size_d +d;
+										break;
+					      case 2:					
+						  top_index = (((item_id * 1 + c) * out_label_size_h + 
+												h)* out_label_size_w + w) *out_label_size_d 
+												+(out_label_size_d - 1 - d);
+									    break;
+						  default:
+						    LOG(ERROR)<<"wrong mirro param";
+						  }
 										  
-						  size_t data_index = ((c * height + h + label_h_off) * width + w + label_w_off)*depth +d+label_d_off;
-						 // Dtype datum_element =
-							//  static_cast<Dtype>(static_cast<float_t>(elm_labels[data_index]));
+						 size_t data_index = ((c * height + h + label_h_off) * width + w + label_w_off)*depth +d+label_d_off;
 							  Dtype datum_element = static_cast<Dtype>(static_cast<float_t>(datum.float_label(data_index)));
-							//if(binary && datum_element != layer->layer_param_.image_label_data_param().background_class())
-							//	top_label[top_index] = 1;
-							//else
-								//top_label[top_index] = datum_element;
-								
 							if(layer->balancing_label_)
 							{
 							  accept_label=layer->accept_given_label(datum_element);
-							  if(accept_label)
+							  if(accept_label ||layer->output_single_label_)
 									top_label[top_index] = layer->get_converted_label(datum_element);
+							  
 							}
 							else
 							 {
+							     accept_label          = true;
 							     top_label[top_index]  =datum_element;
 							 }
 						}
@@ -204,6 +211,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 				  }
 				}
 		}else{
+		       // Not mirrorring....
 		       // top_label[item_id]=10;
 		    // if (layer->output_labels_){
 				for (size_t c = 0; c < 1; ++c) {
@@ -213,33 +221,22 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 						 // int top_index = ((item_id * channels + c) * crop_size + h)
 						 //				  * crop_size + w;
 						  size_t top_index = (((item_id * 1 + c) * out_label_size_h + h)
-										  * out_label_size_w + w) *out_label_size_d +d;
-										  
+										  * out_label_size_w + w) *out_label_size_d +d;			  
 						  size_t data_index = ((c * height + h + label_h_off) * width + w + label_w_off)*depth +d+label_d_off;
-						 // Dtype datum_element =
-							//  static_cast<Dtype>(static_cast<float_t>(elm_labels[data_index]));
-							  Dtype datum_element = static_cast<Dtype>(static_cast<float_t>(datum.float_label(data_index)));
-							  
+							  Dtype datum_element = static_cast<Dtype>(static_cast<float_t>(datum.float_label(data_index)));  
 							if(layer->balancing_label_)
 							{
 							  accept_label=layer->accept_given_label(datum_element);
 							  if(accept_label)
 									top_label[top_index] = layer->get_converted_label(datum_element);
+							  if(layer->output_single_label_)
+								      top_label[top_index] = layer->get_converted_label(datum_element);
 							}
 							else
 							 {
+							    // accept_label          = true; 
 							     top_label[top_index]  =datum_element;
 							 }
-							  
-							  
-							  // accept_label=layer->accept_given_label(datum_element);
-							  // if(accept_label){
-									// top_label[top_index] = layer->get_converted_label(datum_element);
-									// LOG(INFO)<<"try to convert label  " << datum_element;
-									// }
-									
-								//if(layer->rest_of_label_mapping_ && accept_label) 
-								//	top_label[top_index] = layer->get_converted_label(datum_element);
 						}
 					}
 				  }
@@ -248,39 +245,64 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 		   
 		}
 		
-		//if (layer->phase_ == Caffe::TEST) { break;}
 		if(label_size>1){break;}
-		
-		//if(accept_label) break;
-		//int skip_rate= layer->layer_param_.image_label_data_param().background_skip_rate();
-		//bool accept = (layer->PrefetchRand()%skip_rate==0);
-		//if (accept && top_label[0]==layer->layer_param_.image_label_data_param().background_class())
-		//	{break;}
-		// LOG(INFO)<<"top_label[0] =" <<top_label[0];
-		
-		// if(layer->output_labels_&&layer->accept_given_label(top_label[0])){
-				// LOG(INFO)<<"top_label[0] =" <<top_label[0];
-				// if(layer->rest_of_label_mapping_)
-					// top_label[0] = layer->get_converted_label(top_label[0]);
-				// break;
-		// }
-		//break;
 	  }while(layer->output_labels_&&!accept_label);
+	  
+	  
+	if(layer->output_single_label_){
+	 do{
+	    size_t l_h_off = label_h_off +out_label_size_h/2;
+		size_t l_w_off = label_w_off +out_label_size_w/2;
+		size_t l_d_off = label_d_off +out_label_size_d/2;
+		size_t l_s_index = (l_h_off* width  + l_w_off)*depth+l_d_off;
+		
+		//size_t data_index = ((c * height + h + label_h_off) * width + w + label_w_off)*depth +d+label_d_off;
+		Dtype* top_s_label =layer->prefetch_single_label_->mutable_cpu_data();
+		Dtype label= static_cast<Dtype>(static_cast<float_t>(datum.float_label(l_s_index)));
+		top_s_label[item_id] = label;//
+			  if(layer->balancing_label_)
+				{
+				  accept_label=layer->accept_given_label(label);
+				  if(accept_label)
+						top_label[item_id] = layer->get_converted_label(label);
+				}
+				else
+				 {
+					 accept_label          = true; 
+					 top_label[item_id]  =label;
+				 }
+		}while( !accept_label);
+		
+	}
 	
 		
-				
-		
-		//LOG(INFO)<<"get label from "<<label_h_off<<" "<<label_w_off<<" "<<label_d_off;
-		//label_w_off = w_off + (crop_size_w-out_label_size_w)/2;
-		//label_d_off = d_off + (crop_size_d-out_label_size_d)/2;;
-		
-	if (mirror && layer->PrefetchRand() % 2) {
+	//if (mirror && layer->PrefetchRand() % 2) {
+	  if(do_mirror){
+	     size_t top_index =0 ;
         for (size_t c = 0; c < channels; ++c) {
           for (size_t h = 0; h < crop_size_h; ++h) {
             for (size_t w = 0; w < crop_size_w; ++w) {
 				for (size_t d = 0; d < crop_size_d; ++d){
-				      size_t top_index = (((item_id * channels + c) * crop_size_h + h)
-								  * crop_size_w + (crop_size_w - 1 - w))*crop_size_d +d;
+				      //size_t top_index = (((item_id * channels + c) * crop_size_h + h)
+					  //		  * crop_size_w + (crop_size_w - 1 - w))*crop_size_d +d;
+					   switch(mirro_dimention){
+						  case 0:
+						  top_index = (((item_id * channels + c) * crop_size_h + h)
+										  * crop_size_w + ( crop_size_w - 1 - w)) *crop_size_d +d;
+										break;
+						  case 1:
+						  top_index = (((item_id * channels + c) * crop_size_h + 
+												(crop_size_h - 1 - h))
+												* crop_size_w + w) *crop_size_d +d;
+										break;
+					      case 2:					
+						  top_index = (((item_id * channels + c) * crop_size_h + 
+												h)* crop_size_w  + w) *crop_size_d 
+												+(crop_size_d - 1 - d);
+									    break;
+						  default:
+						    LOG(ERROR)<<"wrong mirro param";
+						  }
 				      int h_idx = h + h_off;
 					  int w_idx = w + w_off;
 					  int d_idx = d + d_off;
@@ -316,7 +338,6 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 					  int w_idx = w + w_off;
 					  int d_idx = d + d_off;
 					   size_t data_index = ((c * height + h_idx) * width + w_idx)*depth +d_idx;
-					  //if(h_off >= 0 && h_off+h<height && w_off+w >= 0 && w_off < width && d_off >= 0 && d_off < depth)
 					  if(h_idx >= 0 && h_idx<height && w_idx >= 0 && w_idx < width && d_idx >= 0 && d_idx < depth)
 					  {
 							Dtype datum_element;
@@ -329,7 +350,6 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 						  // CHECK_LE(datum_element,255);
 						   //static_cast<Dtype>(static_cast<float_t>(data[data_index]));//datum_element* scale;//(datum_element - mean[data_index]) * scale;
 					   }else{
-					     //int x=0;
 						 top_data[top_index] = 0;
 						}
 					}
@@ -381,7 +401,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
     }
 	 
   }
- // LOG(INFO)<<"done prefectch thread ";
+ //LOG(INFO)<<"done prefectch thread ";
   //pthread_mutex_unlock(&c_mutex); 
   return static_cast<void*>(NULL);
 }
@@ -409,11 +429,18 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   Layer<Dtype>::SetUp(bottom, top);
   read_patch_times_ =0;
-  if (top->size() == 2) {
+  if (top->size() >= 2) {
     output_labels_ = true;
   } else {
     output_labels_ = false;
   }
+  if (top->size() == 3) {
+    output_single_label_ = true;
+  } else {
+    output_single_label_ = false;
+  }
+  
+  
   rand_patch_times_ =this->layer_param_.image_label_data_param().rand_patch_times();
   
   // Initialize DB
@@ -528,9 +555,9 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   LOG(INFO) <<"Data layer input  batch_size is = "<<this->layer_param_.image_label_data_param().batch_size();
  // if (crop_size > 0)
    if (is_crop_){  
-	CHECK_GT(datum_height_, crop_size_h_);
-	CHECK_GT(datum_width_, crop_size_w_);
-	CHECK_GT(datum_depth_, crop_size_d_);
+	//CHECK_GT(datum_height_, crop_size_h_);
+	//CHECK_GT(datum_width_, crop_size_w_);
+	//CHECK_GT(datum_depth_, crop_size_d_);
     (*top)[0]->Reshape(this->layer_param_.image_label_data_param().batch_size(),
                        datum.channels(), crop_size_h_, crop_size_w_, crop_size_d_);
 	// shared_ptr<Blob<Dtype> > prefetch_data_
@@ -581,6 +608,15 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 		CHECK_GE(datum_depth_,out_label_size_d_);
 	
   }
+  
+   if (output_single_label_) {
+     (*top)[2]->Reshape(this->layer_param_.image_label_data_param().batch_size(),
+      1, 1, 1, 1);
+	  prefetch_single_label_.reset(new Blob<Dtype>(
+        this->layer_param_.image_label_data_param().batch_size(), 1,
+        1,1,1));
+		
+   }
   // datum size
  
   
@@ -949,6 +985,11 @@ Dtype ImageLabelDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom
     caffe_copy(prefetch_label_->count(), prefetch_label_->cpu_data(),
                (*top)[1]->mutable_cpu_data());
   }
+  if(output_single_label_){
+	 caffe_copy(prefetch_single_label_->count(), prefetch_single_label_->cpu_data(),
+               (*top)[2]->mutable_cpu_data());
+  }
+  
   //LOG(INFO)<<"label copyied from prefech.....";
  // LOG(INFO)<<"Start a new prefetch thread";
   CreatePrefetchThread();

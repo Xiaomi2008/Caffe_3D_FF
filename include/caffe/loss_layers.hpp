@@ -306,6 +306,8 @@ class AccuracyLayer : public Layer<Dtype> {
   }
 
   int top_k_;
+  int outer_num_;
+  int inner_num_;
 };
 
 /* MultiLabelAccuracyLayer

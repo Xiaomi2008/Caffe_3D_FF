@@ -92,11 +92,18 @@ int feature_extraction_pipeline(int argc, char** argv) {
   string pretrained_binary_proto(argv[++arg_pos]);
   int patch_h  =atoi(argv[++arg_pos]);
   int patch_w  =atoi(argv[++arg_pos]);
-  int patch_d  =atoi(argv[++arg_pos]);
+  int patch_d  =atoi(argv[++arg_pos]); 
+  int start_h  = 0;
   LOG(INFO)<<patch_h<<" "<<patch_w<<" "<<patch_d;
-  string predict_range(argv[++arg_pos]);
+  string predict_range(argv[++arg_pos]); 
+	 
+ // if(predict_range== "SINGLE"){
+     start_h=atoi(argv[++arg_pos]);
+  //}
+  
+  
   LOG(INFO)<<predict_range;
-  int start_h  =atoi(argv[++arg_pos]);
+   
   LOG(INFO)<< start_h;
  // sleep(10);
   
@@ -324,6 +331,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	 int skip =0;
 	 if(!skip){
 	 //for (int h=0; h<1; h+=patch_h){
+	// LOG(INFO)<<"processing
 	  for (int h=p_start_h; h< p_end_h; h++){
 	       LOG(INFO)<<"start h "<<h;
 		   LOG(INFO)<<"processing height = " << h;
@@ -377,7 +385,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 					}
 				}
 				//continue;
-			    LOG(INFO)<<"propagate height x width X d = " << h <<" "<<w<<" "<< d;				
+			    //LOG(INFO)<<"propagate height x width X d = " << h <<" "<<w<<" "<< d;				
 	 
 				vector<Blob<Dtype>*> input_vec;
 				input_vec.clear();

@@ -166,62 +166,48 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		float heigh_v =0;
 		int heigh_freq_lb=0;
 		for (size_t i = 0; i < outer_num; ++i) {
-		   std::map<int,float> label_freq;
-		   std::map<int,float>::iterator it;
-		   for (size_t j = 0; j < inner_num; ++j){
-		      //label_freq[label_value]=0;
-			  const int label_value = static_cast<int>(label[i * inner_num + j]);
-			  label_freq[label_value]=0;
-			  //label_freq[label_value]++;
-		   }
-		   
-		   for (size_t j = 0; j < inner_num; ++j){
-				const int label_value = static_cast<int>(label[i * inner_num + j]);
-			  label_freq[label_value]++;
-		   }
-		   
-		   //vector<PAIR> label_freq_vec(label_freq.begin(), label_freq.end());  
-			//sort(label_freq_vec.begin(), label_freq_vec.end(), CmpByValue());
-		   //int low_lb= label_freq[label_freq.size()-1].first;
-		   //float low_freq =label_freq[label_freq.size()-1].second;
-		   //find highest freq label in patch; 
 		  
-		 
-			   
-		  for (size_t j = 0; j < inner_num; ++j) {
+		   for (size_t j = 0; j < inner_num; ++j) {
 			const int label_value = static_cast<int>(label[i * inner_num + j]);
-			//if (has_ignore_label_ && label_value == ignore_label_) {
-			 // for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
-			 //   bottom_diff[i * dim + c * inner_num_ + j] = 0;
-			 // }
-		   // } else {
-		       Dtype lb_diff =bottom_diff[i * dims + label_value * inner_num + j]-1;
-		       bottom_diff[i * dims + label_value * inner_num + j] =lb_diff;
-			   for(it = label_freq.begin();it !=label_freq.end();it++){
-		          int    lb				=it->first;
-				  if(lb==label_value) continue;
-				  float freq_prob		=it->second/inner_num;
-				  Dtype prob_diff 		= bottom_diff[i * dims + lb * inner_num + j]-1;
-				  bottom_diff[i * dims + lb * inner_num + j] =prob_diff*freq_prob*(0-lb_diff);
-		  	   }
-			  
-		      // for(int k=0;k<label_freq.size();++k)
-			  // {
-			     // int lb= label_freq[k].first;
-				
-				 // bottom_diff[i * dims + lb * inner_num + j] =prob_diff *
-			  // }
-			  
-		      
-		      // Dtype dif_m =bottom_diff[i * dims + heigh_freq_lb * inner_num + j] -1;
-			  // Dtype dif_lb =bottom_diff[i * dims + label_value * inner_num + j] -1;
-			  // bottom_diff[i * dims + heigh_freq_lb * inner_num + j]=dif_m*dif_lb;
-			  // bottom_diff[i * dims + label_value * inner_num + j] =dif_lb;
-			  
-		      //bottom_diff[i * dims + heigh_freq_lb * inner_num + j] -= 1;
-			  //bottom_diff[i * dims + label_value * inner_num + j] -= 1;
+		    bottom_diff[i * dims + label_value * inner_num + j] -=1;
 			  ++count;
 			}
+			
+		   
+		   // idea may not work....
+		   // std::map<int,float> label_freq;
+		   // std::map<int,float>::iterator it;
+		   // for (size_t j = 0; j < inner_num; ++j){
+		      // //label_freq[label_value]=0;
+			  // const int label_value = static_cast<int>(label[i * inner_num + j]);
+			  // label_freq[label_value]=0;
+			  // //label_freq[label_value]++;
+		   // }
+		   
+		   // for (size_t j = 0; j < inner_num; ++j){
+				// const int label_value = static_cast<int>(label[i * inner_num + j]);
+			  // label_freq[label_value]++;
+		   // }
+
+		  // for (size_t j = 0; j < inner_num; ++j) {
+			// const int label_value = static_cast<int>(label[i * inner_num + j]);
+			// //if (has_ignore_label_ && label_value == ignore_label_) {
+			 // // for (int c = 0; c < bottom[0]->shape(softmax_axis_); ++c) {
+			 // //   bottom_diff[i * dim + c * inner_num_ + j] = 0;
+			 // // }
+		   // // } else {
+		       // Dtype lb_diff =bottom_diff[i * dims + label_value * inner_num + j]-1;
+		       // bottom_diff[i * dims + label_value * inner_num + j] =lb_diff;
+			   // for(it = label_freq.begin();it !=label_freq.end();it++){
+		          // int    lb				=it->first;
+				  // if(lb==label_value) continue;
+				  // float freq_prob		=it->second/inner_num;
+				  // Dtype prob_diff 		= bottom_diff[i * dims + lb * inner_num + j]-1;
+				  // bottom_diff[i * dims + lb * inner_num + j] =prob_diff*freq_prob*(0-lb_diff);
+		  	   // }
+			  
+			  // ++count;
+			// }
 		  }
 		
 		
