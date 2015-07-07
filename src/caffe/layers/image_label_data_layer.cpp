@@ -93,6 +93,8 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
   //LOG(INFO)<<"current element label  size is: "<< out_label_size_h;
   //pthread_mutex_lock(&c_mutex);
   const Dtype* mean = layer->data_mean_.cpu_data();
+  //LOG(INFO)<<"in thread mean[0] = "<< mean[0];
+  //sleep(100);
  // pthread_mutex_unlock(&c_mutex);
   //if (rand_patch_times>batch_size){rand_patch_times=batch_size;}
   
@@ -141,9 +143,9 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 		if(padding)
 		{
 		    if(layer->output_labels_){
-				h_off = prefech_h  % (height-out_label_size_h/2) - (crop_size_h- out_label_size_h)/2;
-				w_off = prefech_w  % (width -out_label_size_w/2)  - (crop_size_w- out_label_size_w)/2 ;
-				d_off = prefech_d  % (depth -out_label_size_d/2)  - (crop_size_d - out_label_size_d)/2 ;
+				h_off = prefech_h  % (height-out_label_size_h/2)  -  (crop_size_h - out_label_size_h)/2;
+				w_off = prefech_w  % (width -out_label_size_w/2)  -  (crop_size_w - out_label_size_w)/2 ;
+				d_off = prefech_d  % (depth -out_label_size_d/2)  -  (crop_size_d - out_label_size_d)/2 ;
 			
 			}else{
 				h_off = prefech_h  % height - crop_size_h/2;
@@ -306,18 +308,38 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 				      int h_idx = h + h_off;
 					  int w_idx = w + w_off;
 					  int d_idx = d + d_off;
+					  h_idx=h_idx<0? 0-h_idx:  h_idx;
+					  w_idx=w_idx<0? 0-w_idx:  w_idx;
+					  d_idx=d_idx<0? 0-d_idx:  d_idx;
+					  h_idx=h_idx>=height? h_off+(crop_size_h-h-1) : h_idx;
+					  w_idx=w_idx>=width? w_off+(crop_size_w-w-1): w_idx;
+					  d_idx=d_idx>=depth? d_off+(crop_size_d-d-1) : d_idx;
+					  
+					  
 					   size_t data_index = ((c * height + h_idx) * width + w_idx)*depth +d_idx;
-					  if(h_idx >= 0 && h_idx<height && w_idx >= 0 && w_idx < width && d_idx >= 0 && d_idx < depth){
-								Dtype datum_element;
+					  //if(h_idx >= 0 && h_idx<height && w_idx >= 0 && w_idx < width && d_idx >= 0 && d_idx < depth){
+							  Dtype datum_element;
 							  if(data.size()){
 									datum_element=static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));}
 							  else{
 									datum_element =datum.float_data(data_index);
 								  }
+							 
 							 top_data[top_index] = (datum_element - mean[data_index]) * scale;
-						}else{
-							top_data[top_index] = 0;
-						}
+							 //Dtype mean2= layer->data_mean_.cpu_data()[data_index];
+							 //top_data[top_index] = (datum_element - mean2) * scale;
+							// LOG(INFO)<<" Mirro crop |  top_data[top_index] = "<<top_data[top_index] <<"datum_element = "<<datum_element << "  mean["<<data_index<<"]= "<<mean[data_index]<<"  mean_bob "<< layer->data_mean_.cpu_data()[0];
+						    // sleep(3);
+						//}else{
+								
+						   
+							 
+							 // h_idx=h_idx<0? 0-h_idx:  h_off-h-1;
+							 // w_idx=w_idx<0? 0-w_idx:  w_off-w-1;
+							 // d_idx=d_idx<0? 0-d_idx:  d_off-d-1;
+						    // data_index =((c * height + h_idx) * width + w_idx)*depth +d_idx;
+							// top_data[top_index] = datum.float_data(data_index);
+						//}
 			  }
             }
           }
@@ -337,21 +359,33 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 					  int h_idx = h + h_off;
 					  int w_idx = w + w_off;
 					  int d_idx = d + d_off;
-					   size_t data_index = ((c * height + h_idx) * width + w_idx)*depth +d_idx;
-					  if(h_idx >= 0 && h_idx<height && w_idx >= 0 && w_idx < width && d_idx >= 0 && d_idx < depth)
-					  {
+					  h_idx=h_idx<0? 0-h_idx:  h_idx;
+					  w_idx=w_idx<0? 0-w_idx:  w_idx;
+					  d_idx=d_idx<0? 0-d_idx:  d_idx;
+					  h_idx=h_idx>=height? h_off+(crop_size_h-h-1) : h_idx;
+					  w_idx=w_idx>=width? w_off+(crop_size_w-w-1): w_idx;
+					  d_idx=d_idx>=depth? d_off+(crop_size_d-d-1) : d_idx;
+					  size_t data_index = ((c * height + h_idx) * width + w_idx)*depth +d_idx;
+					  //if(h_idx >= 0 && h_idx<height && w_idx >= 0 && w_idx < width && d_idx >= 0 && d_idx < depth)
+					  //{
 							Dtype datum_element;
 						   if(data.size()){
 									datum_element=static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));}
 						   else{
-									datum_element =datum.float_data(data_index);}
-						   top_data[top_index] =  datum_element;
+									datum_element =datum.float_data(data_index);
+							}
+						   //top_data[top_index] =  datum_element;
+						     top_data[top_index] = (datum_element - mean[data_index]) * scale;
+						     //Dtype mean2= layer->data_mean_.cpu_data()[data_index];
+							 //top_data[top_index] = (datum_element - mean2) * scale;
+							 // LOG(INFO)<<" Norm crop |  top_data[top_index] =  "<<top_data[top_index] <<"datum_element = "<<datum_element << "  mean["<<data_index<<"]= "<<mean[data_index]<<"  mean_bob "<< layer->data_mean_.cpu_data()[0];
+						   //sleep(3);
 						  // CHECK_GE(datum_element,0);
 						  // CHECK_LE(datum_element,255);
 						   //static_cast<Dtype>(static_cast<float_t>(data[data_index]));//datum_element* scale;//(datum_element - mean[data_index]) * scale;
-					   }else{
-						 top_data[top_index] = 0;
-						}
+					   //}else{
+						// top_data[top_index] = 0;
+						//}
 					}
 				}
 			  }
@@ -622,6 +656,7 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   
   
   // check if we want to have mean
+ 
   if (this->layer_param_.image_label_data_param().has_mean_file()) {
     const string& mean_file = this->layer_param_.image_label_data_param().mean_file();
     LOG(INFO) << "Loading mean file from" << mean_file;
@@ -636,6 +671,7 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   } else {
     // Simply initialize an all-empty mean.
     data_mean_.Reshape(1, datum_channels_, datum_height_, datum_width_,datum_depth_);
+	data_mean_.cpu_data();
   }
   // Now, start the prefetch thread. Before calling prefetch, we make two
   // cpu_data calls so that the prefetch thread does not accidentally make
@@ -645,11 +681,12 @@ void ImageLabelDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   if (output_labels_)
     prefetch_label_->mutable_cpu_data();
   
-  
+  //LOG(INFO)<<"data_mean[0] ="<<data_mean_.cpu_data()[0];
+  //sleep(20);
   num_memory_datums_= this->layer_param_.image_label_data_param().num_memory_datum();
   datums_.resize(num_memory_datums_); 
   //readNextDatums();
-  data_mean_.cpu_data();
+  
   ProcessLabelSelectParam();
   LOG(INFO) << "Initializing prefetch";
   CreatePrefetchThread();

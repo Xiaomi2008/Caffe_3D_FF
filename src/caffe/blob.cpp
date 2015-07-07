@@ -210,7 +210,13 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
 template <typename Dtype>
 void Blob<Dtype>::FromProto(const BlobProto& proto) {
   LOG(INFO)<<"FromProto size = "<<proto.num()  <<" "<<proto.channels() << " "<<proto.height()<<" "<< proto.width()<<" "<< proto.depth();
-  Reshape(proto.num(), proto.channels(), proto.height(), proto.width(), proto.depth());
+  if(proto.depth() ==0)
+  {
+		LOG(INFO)<< "proto depth is 0, converting to 1 for 2D models to 3D models...";
+		Reshape(proto.num(), proto.channels(), proto.height(), proto.width(), 1);
+  }else{
+		Reshape(proto.num(), proto.channels(), proto.height(), proto.width(), proto.depth());
+  }
   // copy data
   Dtype* data_vec = mutable_cpu_data();
   /* for testing only
@@ -222,7 +228,10 @@ void Blob<Dtype>::FromProto(const BlobProto& proto) {
   */
   for (size_t i = 0; i < count_; ++i) {
     data_vec[i] = proto.data(i);
+	//LOG(INFO)<<"proto.data(i) ="<<proto.data(i);
   }
+  //LOG(INFO)<<"proto.data[11870779] ="<<proto.data(11870779);
+  //sleep(20);
   //  LOG(INFO)<<"proto.diff_size= "<<proto.diff_size();
   if (proto.diff_size() > 0) {
     Dtype* diff_vec = mutable_cpu_diff();

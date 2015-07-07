@@ -16,10 +16,10 @@ import caffe.io
 from caffe.proto import caffe_pb2
 print os.path.dirname(caffe_pb2.__file__) 
 #from caffe.proto import caffe_pb2
-#mat_file ='/home/tzeng/caffe_flx_kernel/data/snems3d_test_norm'
+mat_file ='/home/tzeng/caffe_flx_kernel/data/snems3d_train_RF8.mat'
 #mat_file ='/home/tzeng/caffe_flx_kernel/data/snems3d_test_pad_2_47_47.mat'
 #mat_file= '/home/tzeng/caffe_flx_kernel/data/snems3d_train_RF8_20Percent.mat'
-mat_file= '/home/tzeng/caffe_flx_kernel/data/snems3d_predict_norm.mat'
+#mat_file= '/home/tzeng/caffe_flx_kernel/data/snems3d_predict_norm.mat'
 #snems3d_train_pad_4_47_47.mat'
 #mat_file ='/home/tzeng/caffe_3d/data/snems3d_test_pad25.mat'
 #mat_file ='/home/tzeng/caffe_3d/data/test'
@@ -30,10 +30,10 @@ size=size[1];
 print size
 k=1
 #db_path_data='/home/tzeng/caffe_3d/data/mri_test_pad'
-#db_path_data='/home/tzeng/caffe_3d/data/snems3d_train'
+db_path_data='/home/tzeng/caffe_3d/data/snems3d_train_RF8'
 #db_path_data='/home/tzeng/caffe_3d/data/snems3d_train_pad25'
 #db_path_data='/home/tzeng/caffe_flx_kernel/data/snems3d_train_pad_4_47_47_rotations_hFlip'
-db_path_data='/home/tzeng/caffe_flx_kernel/data/snems3d_predict_norm'
+#db_path_data='/home/tzeng/caffe_flx_kernel/data/snems3d_predict_norm'
 #db_path_data='/home/tzeng/caffe_flx_kernel/data/snems3d_test_norm'
 #db_path_data='/home/tzeng/caffe_flx_kernel/data/snems3d_test_pad_2_47_47_FlipRatation'
 #snems3d_test_submit_pad25'

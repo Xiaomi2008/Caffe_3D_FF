@@ -76,18 +76,21 @@ int feature_extraction_pipeline(int argc, char** argv) {
   LOG(INFO)<<predict_blob_name;
   
   if (argc > arg_pos && strcmp(argv[++arg_pos], "GPU") == 0) {
-    LOG(ERROR)<< "Using GPU";
-    uint device_id = 0;
+    LOG(INFO)<< "Using GPU";
+    int device_id = 0;
 	
+	//LOG(INFO)<<argv[arg_pos];
+	//arg_pos++;//
+	//LOG(INFO)<<argv[arg_pos];
     // if (argc > arg_pos + 1) {
-      // device_id = atoi(argv[arg_pos + 1]);
-      // CHECK_GE(device_id, 0);
+      device_id = atoi(argv[++arg_pos]);
+      CHECK_GE(device_id, 0);
     // }
 	// arg_pos++;
-	 if (argc > arg_pos) {
-        device_id = atoi(argv[++arg_pos]);
-        CHECK_GE(device_id, 0);
-      }
+	 //if (argc > arg_pos) {
+     //   device_id = atoi(argv[++arg_pos]);
+     //   CHECK_GE(device_id, 0);
+     // }
 	 //arg_pos++;
     LOG(ERROR) << "Using Device_id=" << device_id;
     Caffe::SetDevice(device_id);
@@ -391,7 +394,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 					}
 				}
 				//continue;
-			    //LOG(INFO)<<"propagate height x width X d = " << h <<" "<<w<<" "<< d;				
+			    LOG(INFO)<<"predicting ... "<< h;				
 	 
 				vector<Blob<Dtype>*> input_vec;
 				input_vec.clear();
