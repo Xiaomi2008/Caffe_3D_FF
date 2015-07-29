@@ -9,7 +9,6 @@ layers {
    #mean_file: "/home/tzeng/caffe_3d/data/mri_mean.binary"
    out_label_size: 1
    batch_size: 100
-   #rand_patch_times: 150
    rand_patch_times: 9999999
    crop_size_h: 5
    crop_size_w: 95
