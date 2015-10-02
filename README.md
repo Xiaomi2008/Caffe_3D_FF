@@ -27,6 +27,8 @@ are processed in batch mode.
 
 \* When measured with the [SuperVision](http://www.image-net.org/challenges/LSVRC/2012/supervision.pdf) model that won the ImageNet Large Scale Visual Recognition Challenge 2012.
 
+
+
 ## License
 
 Caffe is BSD 2-Clause licensed (refer to the
@@ -56,6 +58,11 @@ To do so, simply run `jekyll serve -s docs` and view the documentation website a
 
 We strive to provide provide lots of usage examples, and to document all code in docstrings.
 We'd appreciate your contribution to this effort!
+## Functions
+This version of caffe is modified from old version of caffe, and is able to do:
+1. Convolutional  networks  with 3D data.
+2. Selecting random patchs from input Volum  into batch to train the networks, eliminating the need to create patch files for training.
+3. Enabling the sample/calss balance for batch training by set probability of each class in th file
 
 ## Development
 
