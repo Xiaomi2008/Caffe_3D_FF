@@ -167,7 +167,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 
 	//do_mirror=(mirror && layer->PrefetchRand() % 2);
   int pre_rand= abs(layer->PrefetchRand())%4;
-  do_mirror=(pre_rand<3);
+  do_mirror=mirror &&(pre_rand<3);
 	mirro_dimention=layer->PrefetchRand() % 3;
   //no_mirror  =
 	if (layer->output_labels_){
