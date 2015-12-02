@@ -62,8 +62,8 @@ We'd appreciate your contribution to this effort!
 This version of caffe is modified from old version of caffe, and is able to do:
 - 1. Convolutional  networks  with 3D data.
 - 2. Selecting random patchs from input Volum  into batch to train the networks, eliminating the need to create patch files for training.
-- 3. Enabling the sample/calss balance for batch training by set probability of each class in th file
-
+- 3. Enabling the sampling  balanced calsses for batch training by set probability of each class in th file
+- 4. fast image based predictions.
 ## Development
 
 Caffe is developed with active participation of the community by the [Berkeley Vision and Learning Center](http://bvlc.eecs.berkeley.edu/).
