@@ -20,6 +20,11 @@ void ConcatLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 
   // Initialize with the first blob.
   count_ = bottom[0]->count();
+
+  for (int i=1;i<bottom.size();++i){
+    size_t count_o = bottom[i]->count();
+    CHECK_EQ(count_,count_o);
+  }
   num_ = bottom[0]->num();
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
