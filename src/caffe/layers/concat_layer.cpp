@@ -51,10 +51,10 @@ Dtype ConcatLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     int offset_num = 0;
     for (int i = 0; i < bottom.size(); ++i) {
       const Dtype* bottom_data = bottom[i]->cpu_data();
-	  
+
 	  Dtype sum_bottom=0;
-	 
-      int num_elem = bottom[i]->count(); 
+
+      int num_elem = bottom[i]->count();
 	  for(int k=0;k<num_elem;k++){
 	    sum_bottom=sum_bottom+bottom_data[k];
 		}
@@ -101,7 +101,7 @@ void ConcatLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       Blob<Dtype>* blob = (*bottom)[i];
       if (propagate_down[i]) {
         Dtype* bottom_diff = blob->mutable_cpu_diff();
-        int num_elem = blob->channels()*blob->height()*blob->width();
+        int num_elem = blob->channels()*blob->height()*blob->width()*blob->depth();
         for (int n = 0; n < num_; ++n) {
           caffe_copy(num_elem, top_diff + top[0]->offset(n, offset_channel),
                      bottom_diff + blob->offset(n));
