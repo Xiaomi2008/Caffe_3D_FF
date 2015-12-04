@@ -25,7 +25,7 @@ Dtype ConcatLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     for (int i = 0; i < bottom.size(); ++i) {
       const Dtype* bottom_data = bottom[i]->gpu_data();
       int num_elem =
-        bottom[i]->channels() * bottom[i]->height() * bottom[i]->width() * bottom[i]->width();
+        bottom[i]->channels() * bottom[i]->height() * bottom[i]->width() * bottom[i]->depth();
       for (int n = 0; n < num_; ++n) {
         caffe_copy(num_elem, bottom_data+bottom[i]->offset(n),
           top_data + (*top)[0]->offset(n, offset_channel));
