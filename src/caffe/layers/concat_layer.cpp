@@ -39,6 +39,7 @@ void ConcatLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       depth_ += bottom[i]->depth();
     }
   }
+  LOG(INFO)<<"concat_dim ="<< concat_dim_ << " concat layer num = "<<num_ <<" channel ="<<"channels_";
   (*top)[0]->Reshape(num_, channels_, height_, width_, depth_);
   CHECK_EQ(count_, (*top)[0]->count());
 }
