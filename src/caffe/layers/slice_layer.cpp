@@ -19,9 +19,9 @@ void SliceLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   std::copy(slice_param.slice_point().begin(),
       slice_param.slice_point().end(),
       std::back_inserter(slice_point_));
-	  
+
 	  Reshape(bottom,top);
-	  
+
 	  // this is tzeng test part 12/08/2014
 	   //for (int i = 0; i < top->size(); ++i){
 	   //(*top)[i]->Reshape(bottom[0]->num(), bottom[0]->channels(),
@@ -38,6 +38,7 @@ void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
+  depth_ = bottom[0]->depth();
   LOG(INFO)<<"slice start reshape";
   if (slice_point_.size() != 0) {
     CHECK_EQ(slice_point_.size(), top->size() - 1);
@@ -56,13 +57,13 @@ void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     if (slice_dim_ == 0) {
       slices.push_back(num_ - prev);
       for (int i = 0; i < top->size(); ++i) {
-        (*top)[i]->Reshape(slices[i], channels_, height_, width_);
+        (*top)[i]->Reshape(slices[i], channels_, height_, width_,depth_);
          count_ += (*top)[i]->count();
       }
     } else {
       slices.push_back(channels_ - prev);
       for (int i = 0; i < top->size(); ++i) {
-        (*top)[i]->Reshape(num_, slices[i], height_, width_);
+        (*top)[i]->Reshape(num_, slices[i], height_, width_, depth_);
          count_ += (*top)[i]->count();
       }
     }
@@ -79,7 +80,7 @@ void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       channels_ = channels_ / top->size();
     }
     for (int i = 0; i < top->size(); ++i) {
-      (*top)[i]->Reshape(num_, channels_, height_, width_);
+      (*top)[i]->Reshape(num_, channels_, height_, width_,depth_);
       count_ += (*top)[i]->count();
     }
   }
@@ -106,7 +107,7 @@ Dtype SliceLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     for (int i = 0; i < top->size(); ++i) {
       Blob<Dtype>* blob = (*top)[i];
       Dtype* top_data = blob->mutable_cpu_data();
-      const int num_elem = blob->channels() * blob->height() * blob->width();
+      const int num_elem = blob->channels() * blob->height() * blob->width()*blob->depth();
       for (int n = 0; n < num_; ++n) {
         caffe_copy(num_elem, bottom_data + bottom[0]->offset(n, offset_channel),
                    top_data + blob->offset(n));
@@ -136,7 +137,7 @@ void SliceLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     for (int i = 0; i < top.size(); ++i) {
       Blob<Dtype>* blob = top[i];
       const Dtype* top_diff = blob->cpu_diff();
-      const int num_elem = blob->channels() * blob->height() * blob->width();
+      const int num_elem = blob->channels() * blob->height() * blob->width() * blob->depth();
       for (int n = 0; n < num_; ++n) {
         caffe_copy(num_elem, top_diff + blob->offset(n),
                    bottom_diff + (*bottom)[0]->offset(n, offset_channel));
