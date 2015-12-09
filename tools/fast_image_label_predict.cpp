@@ -41,14 +41,14 @@ int feature_extraction_pipeline(int argc, char** argv) {
   }
   int arg_pos = num_required_args;
   float mean  =.0;
-  bool useMeanFile =false; 
+  bool useMeanFile =false;
   string mean_file;
-  
+
   arg_pos = num_required_args;
-   
-  
-  
- 
+
+
+
+
 
   arg_pos = 0;  // the name of the executable
   string source_DB_name(argv[++arg_pos]);
@@ -56,29 +56,29 @@ int feature_extraction_pipeline(int argc, char** argv) {
   string pretrained_binary_proto(argv[++arg_pos]);
   int patch_h  =atoi(argv[++arg_pos]);
   int patch_w  =atoi(argv[++arg_pos]);
-  int patch_d  =atoi(argv[++arg_pos]); 
+  int patch_d  =atoi(argv[++arg_pos]);
   int start_h  = 0;
   LOG(INFO)<<patch_h<<" "<<patch_w<<" "<<patch_d;
-  string predict_range(argv[++arg_pos]); 
-	 
+  string predict_range(argv[++arg_pos]);
+
  // if(predict_range== "SINGLE"){
      start_h=atoi(argv[++arg_pos]);
   //}
-  
-  
+
+
   LOG(INFO)<<predict_range;
-   
+
   LOG(INFO)<< start_h;
  // sleep(10);
-  
+
   string predict_blob_name(argv[++arg_pos]);
   string out_put_db_name(argv[++arg_pos]);
   LOG(INFO)<<predict_blob_name;
-  
+
   if (argc > arg_pos && strcmp(argv[++arg_pos], "GPU") == 0) {
     LOG(INFO)<< "Using GPU";
     int device_id = 0;
-	
+
 	//LOG(INFO)<<argv[arg_pos];
 	//arg_pos++;//
 	//LOG(INFO)<<argv[arg_pos];
@@ -95,14 +95,14 @@ int feature_extraction_pipeline(int argc, char** argv) {
     LOG(ERROR) << "Using Device_id=" << device_id;
     Caffe::SetDevice(device_id);
     Caffe::set_mode(Caffe::GPU);
-	
+
   } else {
     LOG(ERROR) << "Using CPU";
     Caffe::set_mode(Caffe::CPU);
 	 //if(argc > arg_pos){mean = atof(argv[arg_pos + 1]);}
   }
    Caffe::set_phase(Caffe::TEST);
-  
+
   //if(argc>arg_pos){
 		if(strcmp(argv[++arg_pos], "MEAN_FILE") == 0){
 			
@@ -111,20 +111,20 @@ int feature_extraction_pipeline(int argc, char** argv) {
 			mean_file=argv[arg_pos];
 		}else if (strcmp(argv[++arg_pos], "MEAN_VALUE") == 0){
 		    //arg_pos++;
-            if(argc > arg_pos)			
+            if(argc > arg_pos)
 			mean = atof(argv[arg_pos]);
 		}
 	//}
-	
-  
-  
-  
+
+
+
+
   int soft_max_predict =atoi(argv[++arg_pos]);
   LOG(INFO)<<"soft_max_predict :  "<<soft_max_predict;
   sleep(10);
   //string predict_blob_name(argv[++arg_pos]);
 
- 
+
   	// string feature_extraction_proto(argv[++arg_pos]);
   shared_ptr<Net<Dtype> > patch_prediction_net(
       new Net<Dtype>(path_based_deploy_proto));
@@ -134,30 +134,30 @@ int feature_extraction_pipeline(int argc, char** argv) {
   CHECK(patch_prediction_net->has_blob(predict_blob_name))
         << "Unknown feature blob name " << predict_blob_name
         << " in the network " << path_based_deploy_proto;
- 
- 
- 
+
+
+
 
 
 // Read first source image(3d) from source level_DB;
   Datum source_datum;
   Datum predict_datum;
-  leveldb::Options options; 
+  leveldb::Options options;
   shared_ptr<leveldb::Iterator> iter;
   options.create_if_missing = false;
   options.max_open_files = 100;
   //options.write_buffer_size = 268435456;
-  
 
- 
+
+
   shared_ptr<leveldb::DB> source_db;
     LOG(INFO)<< "Opening source leveldb " << source_DB_name;
     leveldb::DB* db;
     leveldb::Status status = leveldb::DB::Open(options,
                                                source_DB_name.c_str(),
-                                               &db); 
-	
-    
+                                               &db);
+
+
 	CHECK(status.ok()) << "Failed to open leveldb " << source_DB_name;
 	source_db.reset(db);
 	iter.reset(source_db->NewIterator(leveldb::ReadOptions()));
@@ -165,10 +165,10 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	CHECK(iter);
 	CHECK(iter->Valid());
     source_datum.ParseFromString(iter->value().ToString());
-	//return 0;  
-   
-  
-	
+	//return 0;
+
+
+
 	////////////////////////////////////////////////-------------------------
   int num_features =1;
     vector<shared_ptr<leveldb::WriteBatch> > feature_batches(num_features);
@@ -176,7 +176,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
     feature_batches[i] = shared_ptr<leveldb::WriteBatch>(
       new leveldb::WriteBatch());
   }
-	
+
   leveldb::DB* db_w;
   leveldb::WriteOptions write_options;
   write_options.sync = true;
@@ -189,29 +189,29 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	output_db.reset(db_w);
 	//iter.reset(source_db->NewIterator(leveldb::ReadOptions()));
     //iter->SeekToFirst();
-	
+
 	const int kMaxKeyStrLength = 100;
     char key_str[kMaxKeyStrLength];
 	string value;
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 	//========================================================
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
     //int num_mini_batches = 1024;
 	LOG(INFO)<< "labeling images ...";
     //const int d_height =source_datum.height()-patch_h+1;
@@ -221,7 +221,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	//const int d_width  =patch_w;
 	//const int d_depth  =patch_d;
 	//const int d_channels  =source_datum.channels();
-	
+
 	const int s_height =source_datum.height();
 	const int s_width  =source_datum.width();
 	const int s_depth  =source_datum.depth();
@@ -232,14 +232,14 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	int p_end_h   = patch_h;
     int p_end_w   = patch_w;
 	int p_end_d   = patch_d;
-	
+
 	if(s_height < patch_h)
 	{
 		p_start_h=(s_height-patch_h)/2;
 		p_end_h  =p_start_h +patch_h;
 	}
-	
-	
+
+
 	if(predict_range== "FULL"){
 		p_start_h= 0-(patch_h/2);
 		p_end_h  =s_height-(patch_h/2)+1;
@@ -249,24 +249,24 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	   p_end_h=p_start_h+1;
 	}
 
-	
-	
-	
-	
+
+
+
+
 	if(s_width < patch_w)
 	{
 	  p_start_w=(s_width-patch_w)/2;
 		p_end_w  =p_start_w +patch_w;
 	}
-	
+
 	if(s_depth < patch_d)
 	{
 	  p_start_d=(s_depth-patch_d)/2;
 	  p_end_d  =p_start_d +patch_d;
 	}
-	
-	
-	
+
+
+
 	BlobProto blob_proto;
 	Blob<Dtype> data_mean;
 	Dtype* mean_data;
@@ -286,25 +286,25 @@ int feature_extraction_pipeline(int argc, char** argv) {
 		    mean_data = data_mean.mutable_cpu_data();
 		    caffe_set(s_channels*s_height*s_width*s_depth, mean, mean_data);
 		}
-	
-	
-	
-	const shared_ptr<Blob<Dtype> > predict_blob_temp 
+
+
+
+	const shared_ptr<Blob<Dtype> > predict_blob_temp
 				= patch_prediction_net->blob_by_name(predict_blob_name);
-				
-	
+
+
 					//Dtype* pd;
 				//int dim =predict_blob->count()/predict_blob->num();
 				//LOG(INFO)<<"predict blob dim is "<<dim;
 				//int dim =predict_blob->chanels();
-	
-	
-	
+
+
+
 	const int d_height =predict_blob_temp->height();
 	const int d_width  =predict_blob_temp->width();
 	const int d_depth  =predict_blob_temp->depth();
 	const int d_channels  =source_datum.channels();
-	
+
 	if(predict_range=="FULL"){
 		predict_datum.set_height(s_height);
 		}
@@ -312,15 +312,15 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	  // predict_datum.set_height(d_height);
 	   predict_datum.set_height(p_end_h-p_start_h-1);
 	}
-    
-	
+
+
     predict_datum.set_width(d_width);
     predict_datum.set_depth(d_depth);
     predict_datum.set_channels(d_channels);
 	//predict_datum.set_num(source_datum.channels());
-	
-	
-	
+
+
+
 	const string& source_data = source_datum.data();
 	//int*  predict_data     = predict_datum.float_data();
 	//shared_ptr<Blob<Dtype> > input_blob;
@@ -328,10 +328,10 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	 //patch_blob.reset(new Blob<Dtype>(1 , source_datum.channels(), patch_h, patch_w, patch_d));
     // Dtype* patch_data = patch_blob->mutable_cpu_data();
 	//patch_blob.reset(new Blob<Dtype>(1, source_datum.channels(), patch_h, patch_w, patch_d));
-	
-	
-	
-   
+
+
+
+
      LOG(INFO)<<"channel x height x width x depth = " << d_channels<<" "<<d_height <<" "<< d_width<<" "<<d_depth;
 	 LOG(INFO)<<"channel x pacth_h x pacth_w x pacth_d = " << d_channels<<" "<<patch_h <<" "<< patch_w<<" "<<patch_d;
 	 //sleep(2);
@@ -346,7 +346,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 		   LOG(INFO)<<"processing height = " << h;
 	   //for (int h=0; h<d_height; h+=patch_h){
 		for (int w=0; w<d_width; w+=patch_w){
-			
+
 			//for (int d=0; d<1; d+=patch_d)
 			for (int d=0; d<d_depth; d+=patch_d){
 			  size_t count =0;
@@ -361,13 +361,13 @@ int feature_extraction_pipeline(int argc, char** argv) {
 							   //int p_idx = (( c_p * patch_h + h_p)* patch_w + w_p) * patch_d+d_p;
 							  // int s_idx =((c * s_height + h + h_p) * s_width + w + w_p)*s_depth+d+d_p+n;
 							  size_t s_idx = (((size_t)c_p * (size_t)s_height + (size_t)h + (size_t)h_p) * (size_t)s_width + (size_t)w + (size_t)w_p)*(size_t)s_depth+(size_t)d+(size_t)d_p;
-							   
-							   
+
+
 							  // patch_data[count]=source_data[s_idx]-mean_data[s_idx];
 							   //int s_idx =((c * s_height + h + h_p) * s_width + w + w_p)*s_depth+d+d_p+n;
 							   Dtype datum_element;
 							   if(source_data.size()){
-							        if(h+h_p>=0 && h+h_p<s_height && w+w_p>=0 && w+w_p<s_width&& d+d_p>=0 && d+d_p<s_depth )
+							      if(h+h_p>=0 && h+h_p<s_height && w+w_p>=0 && w+w_p<s_width&& d+d_p>=0 && d+d_p<s_depth )
 									    //CHECK_LE(s_dix,)
 										{datum_element=static_cast<Dtype>(static_cast<uint8_t>(source_data[s_idx]));
 										patch_data[count]=datum_element-mean_data[s_idx];}
@@ -376,7 +376,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 										patch_data[count]=0;}
 								}else
 								{
-								    
+
 									if(h+h_p>=0 && h+h_p<s_height && w+w_p>=0 && w+w_p<s_width&& d+d_p>=0 && d+d_p<s_depth )
 										{datum_element=static_cast<Dtype>(static_cast<float_t>(source_data[s_idx]));
 										patch_data[count]=datum_element-mean_data[s_idx];}
@@ -385,7 +385,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
 									  patch_data[count]=0;
 									  }
 								}
-							  
+
 							   //CHECK_EQ(patch_data[count],source_data[s_idx]);
 							   count++;
 							   //patch_data[2]=2;
@@ -394,16 +394,16 @@ int feature_extraction_pipeline(int argc, char** argv) {
 					}
 				}
 				//continue;
-			    LOG(INFO)<<"predicting ... "<< h;				
-	 
+			    LOG(INFO)<<"predicting ... "<< h;
+
 				vector<Blob<Dtype>*> input_vec;
 				input_vec.clear();
 				input_vec.push_back(patch_blob.get());
 				patch_prediction_net->Forward(input_vec);
 				LOG(INFO)<<"end forawrding";
-				const shared_ptr<Blob<Dtype> > predict_blob 
+				const shared_ptr<Blob<Dtype> > predict_blob
 				= patch_prediction_net->blob_by_name(predict_blob_name);
-				
+
 				const Dtype* pd=predict_blob->cpu_data();
 					//Dtype* pd;
 				//int dim =predict_blob->count()/predict_blob->num();
@@ -414,12 +414,12 @@ int feature_extraction_pipeline(int argc, char** argv) {
 				int wid =predict_blob->width();
 				int dep =predict_blob->depth();
 				int ht  =predict_blob->height();
-				
+
 				//LOG(INFO)<<" p_h ="<<p_start_h<<" "<<p_end_h;
 				//LOG(INFO)<<" p_w ="<<p_start_w<<" "<<p_end_w;
 				//LOG(INFO)<<" p_d ="<<p_start_d<<" "<<p_end_d;
-				
-				
+
+
 				LOG(INFO)<<"predict blob dim is "<<num<<" "<<chs<<" "<<ht<<" "<<" "<<wid<<" "<<dep;
 				//soft_max_predict
 				//bool soft_max_predict = false;
@@ -432,38 +432,38 @@ int feature_extraction_pipeline(int argc, char** argv) {
 				else
 				{
 					for(int n=0;n<num;n++){
-						
-						
+
+
 						for(int h=0; h<ht; h++){
 							for(int w=0; w<wid; w++){
 								for(int d=0; d<dep; d++){
-									int max_idx=0; 
+									int max_idx=0;
 									Dtype max_v= - FLT_MAX;
 									for(int c=0;c<chs;c++){
 												size_t idx = ((((size_t)c*(size_t)ht +(size_t)h)*(size_t)wid+(size_t)w)*(size_t)dep+(size_t)d);
 												if (max_v<pd[idx]) {max_v=pd[idx]; max_idx=c;}
-											
+
 										}
-										
+
 									//if(max_idx !=0) {LOG(INFO)<< "class is "<< max_idx;}
 									predict_datum.add_float_data(max_idx);
 								}
 						}
-						
+
 					}
 					//LOG(INFO)<<"added to datum";
-					
+
 					 //LOG(INFO)<<"predict label is "<<max_idx;
 					  //CHECK_GE(predict_blob->count(),1);
 					 //predict_data->push_back(max_idx);
 
 						}
 				}
-			 
+
 		}
-	 
+
    }
-   
+
   }
      //predict_datum.SerializeToString(&value);
      //LOG(INFO)<<"try to serialize predict_datum";
@@ -474,6 +474,6 @@ int feature_extraction_pipeline(int argc, char** argv) {
 	 output_db->Write(write_options,feature_batches[0].get());
      LOG(INFO)<< "Successfully extracted the features!";
  }
-  
+
   return 0;
 }
