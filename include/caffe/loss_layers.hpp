@@ -90,7 +90,7 @@ class SoftmaxWithLossLayer : public Layer<Dtype> {
   // Vector holders to call the underlying softmax layer forward and backward.
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   vector<Blob<Dtype>*> softmax_top_vec_;
-  
+
 };
 
 /* SigmoidCrossEntropyLossLayer
@@ -144,7 +144,8 @@ class MultiLabelLossLayer : public LossLayer<Dtype> {
   explicit MultiLabelLossLayer(const LayerParameter& param)
       : LossLayer<Dtype>(param),
           sigmoid_layer_(new SigmoidLayer<Dtype>(param)),
-          sigmoid_output_(new Blob<Dtype>()) {}
+          sigmoid_output_(new Blob<Dtype>()),
+          extend_class_label_2_multi_task_(false){}
   virtual void FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -176,6 +177,7 @@ class MultiLabelLossLayer : public LossLayer<Dtype> {
   // Vector holders to call the underlying sigmoid layer forward and backward.
   vector<Blob<Dtype>*> sigmoid_bottom_vec_;
   vector<Blob<Dtype>*> sigmoid_top_vec_;
+  bool     extend_class_label_2_multi_task_;
 };
 
 
@@ -336,6 +338,7 @@ class MultiLabelAccuracyLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
     NOT_IMPLEMENTED;
   }
+  bool     extend_class_label_2_multi_task_;
 };
 
 }  // namespace caffe

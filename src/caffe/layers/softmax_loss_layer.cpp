@@ -22,7 +22,7 @@ void SoftmaxWithLossLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   softmax_layer_->SetUp(softmax_bottom_vec_, &softmax_top_vec_);
   if (top->size() >= 1) {
     // softmax loss (averaged across batch)
-    (*top)[0]->Reshape(1, 1, 1, 1);
+    (*top)[0]->Reshape(1, 1, 1,1,1);
   }
   if (top->size() == 2) {
     // softmax output
@@ -40,7 +40,7 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   softmax_layer_->Forward(softmax_bottom_vec_, &softmax_top_vec_);
   const Dtype* prob_data = prob_.cpu_data();
   const Dtype* label = bottom[1]->cpu_data();
-  
+
   size_t outer_num = bottom[0]->num();
   size_t inner_num = bottom[0]->height()*bottom[0]->width()*bottom[0]->depth();
   size_t channels  = bottom[0]->channels();
@@ -50,7 +50,7 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   //LOG(INFO)<<" n "<<prob_.num()<<" c "<<prob_.channels()<<" h "<<prob_.height() <<" w "<<prob_.width() <<" d "<<prob_.depth() <<" outer " <<outer_num << " inner " <<inner_num;
   Dtype loss = 0;
   //LOG(INFO)<< "softmax loss layer prob num ="<<num<< " Dim ="<<dim<<  "  count ="<<prob_.count() <<"  FLT_MIN ="<<FLT_MIN //<<"  FLT_MAX ="<< FLT_MAX;
-  
+
   size_t count = 0;
  if (inner_num>1){
 	  for (size_t i = 0; i < outer_num; ++i) {
@@ -67,42 +67,42 @@ Dtype SoftmaxWithLossLayer<Dtype>::Forward_cpu(
 		  ++count;
 		}
 	  }
-  
-  
+
+
   }
   else{
 	  for (size_t i = 0; i < num; ++i) {
-	   
-		const int label_value=static_cast<int>(label[i]); 
+
+		const int label_value=static_cast<int>(label[i]);
 		// current data's multi class is represent from 0-n , where 0 means such label
 		//is not exist, and 1-n represents the #class n-1, Therefore, to comptibale with softmax which count class from 0:n-1
 		// the input label value is minused by 1.
-		//if (m_label>=0){  //for multilabel case, the code is modified by Tao Zeng 12/17/2014. we only count loss on the label    that is greater than /equal to zero . 
+		//if (m_label>=0){  //for multilabel case, the code is modified by Tao Zeng 12/17/2014. we only count loss on the label    that is greater than /equal to zero .
 		      //if (label[i]!=0)
 		//	LOG(INFO)<<"label in loss is " <<label[i];
-			
+
 		   CHECK_GE(label_value, 0);
 		   CHECK_LT(label_value, prob_.channels());
 			loss += -log(max(prob_data[i * dim + label_value],
 							 Dtype(FLT_MIN)));
 			//			 }
-			
+
 			//loss += -log(max(prob_data[i * dim + m_label],
 			//				 Dtype(FLT_MIN)));
 			//			 }
 		//}
 	  }
 	  //sleep(2);
-  
+
   }
   loss=loss/num;//(outer_num*inner_num);
   //LOG(INFO)<<"label in loss is " <<(*top)[0];
   if (top->size() >= 1) {
     //(*top)[0]->mutable_cpu_data()[0] = loss / num;
-	
+
 	//(*top)[0]->mutable_cpu_data()[0] = loss / num;
 	(*top)[0]->mutable_cpu_data()[0] = loss;
-	
+
   }
   if (top->size() == 2) {
     (*top)[1]->ShareData(prob_);
@@ -125,7 +125,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   //LOG(INFO)<<"SoftmaxLOSSLayer backward_pgu ";
   size_t outer_num = (*bottom)[0]->num();
   size_t inner_num = (*bottom)[0]->height()*(*bottom)[0]->width()*(*bottom)[0]->depth();
-  size_t dims=prob_.count() / outer_num;  
+  size_t dims=prob_.count() / outer_num;
 
    CHECK_GT(inner_num,0);
    CHECK_EQ((*bottom)[1]->count(),outer_num*inner_num);
@@ -134,9 +134,9 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     LOG(FATAL) << this->type_name()
                << " Layer cannot backpropagate to label inputs.";
   }
-  
-  
-  
+
+
+
   if (propagate_down[0]) {
 		Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
 		const Dtype* prob_data = prob_.cpu_data();
@@ -146,7 +146,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		//Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
 		//const Dtype* prob_data = prob_.cpu_data();
 		caffe_copy(prob_.count(), prob_data, bottom_diff);
-		
+
 		int num = prob_.num();
 		int dim = prob_.count() / num;
 		for (int i = 0; i < num; ++i) {
@@ -162,18 +162,18 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 		//const Dtype* label = (*bottom)[1]->cpu_data();
 		size_t dim = prob_.count() / outer_num;
 		size_t count = 0;
-		
+
 		float heigh_v =0;
 		int heigh_freq_lb=0;
 		for (size_t i = 0; i < outer_num; ++i) {
-		  
+
 		   for (size_t j = 0; j < inner_num; ++j) {
 			const int label_value = static_cast<int>(label[i * inner_num + j]);
 		    bottom_diff[i * dims + label_value * inner_num + j] -=1;
 			  ++count;
 			}
-			
-		   
+
+
 		   // idea may not work....
 		   // std::map<int,float> label_freq;
 		   // std::map<int,float>::iterator it;
@@ -183,7 +183,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 			  // label_freq[label_value]=0;
 			  // //label_freq[label_value]++;
 		   // }
-		   
+
 		   // for (size_t j = 0; j < inner_num; ++j){
 				// const int label_value = static_cast<int>(label[i * inner_num + j]);
 			  // label_freq[label_value]++;
@@ -205,17 +205,17 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 				  // Dtype prob_diff 		= bottom_diff[i * dims + lb * inner_num + j]-1;
 				  // bottom_diff[i * dims + lb * inner_num + j] =prob_diff*freq_prob*(0-lb_diff);
 		  	   // }
-			  
+
 			  // ++count;
 			// }
 		  }
-		
-		
+
+
 		// // Scale down gradient
 		//caffe_scal(prob_.count(), Dtype(1) / count, bottom_diff);
 		caffe_scal(prob_.count(), Dtype(1) / count, bottom_diff);
 	}
-  
+
 }
 //LOG(INFO)<<"Done SoftmaxLOSSLayer backward_pgu ";
 }

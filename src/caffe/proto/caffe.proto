@@ -26,9 +26,9 @@ message Datum {
   // the actual image data, in bytes
   optional bytes data = 5;
   repeated int32 label = 6;
- 
+
   // Optionally, the datum could also hold float data.
-  repeated float float_data = 7; 
+  repeated float float_data = 7;
   // Optionally, the datum could also hold float label and this is intend to store element-wise label
   // same as dementions as data(image ) by Tao Zeng 4/14/2015.
   repeated float float_label= 8;
@@ -94,7 +94,7 @@ message SolverParameter {
   optional int32 stepsize = 13; // the stepsize for learning rate policy "step"
   optional int32 snapshot = 14 [default = 0]; // The snapshot interval
   optional string snapshot_prefix = 15; // The prefix for the snapshot.
-  
+
   // whether to snapshot diff in the results or not. Snapshotting diff will help
   // debugging but the final protocol buffer size will be much larger.
   optional bool snapshot_diff = 16 [default = false];
@@ -110,17 +110,17 @@ message SolverParameter {
   // random number generator -- useful for reproducible results. Otherwise,
   // (and by default) initialize using a seed derived from the system clock.
   optional int64 random_seed = 20 [default = -1];
-  
-  
+
+
   // This part is for the CNN that is constructed using multiple shared weight nets
   // we only want to save just one single net because the rest of them are just the same
   // this is intended to solve the crash problem when trying to save the entire nets.
-  // Added by Tao Zeng   12/11/2014  
+  // Added by Tao Zeng   12/11/2014
   enum SnapshotMode{
 	SINGLE_NET = 1;
 	FULL_NET   = 0;
   }
-  
+
   optional  SnapshotMode snapshot_mode =23 [default = FULL_NET];
 }
 
@@ -191,7 +191,7 @@ message LayerParameter {
     TANH = 23;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
-	
+
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -286,7 +286,7 @@ message ConvolutionParameter {
   optional uint32 stride_d = 14 [default = 1]; // The stride depth
   optional FillerParameter weight_filler = 7; // The filler for the weight
   optional FillerParameter bias_filler = 8; // The filler for the bias
-  
+
   optional uint32 kstride = 18 [default = 1]; // The stride of kernel pixel (equal in Y, X)
   optional uint32 kstride_h = 19; // The kernel pixel stride height
   optional uint32 kstride_w = 20; // The kernel pixel stride width
@@ -458,7 +458,10 @@ message ImageLabelDataParameter {
   //optional uint32 num_top_balanced_class    =  22 [default = 0];
   //optional string  class_probability_file  	=  23;
   optional Label_Select_Param  label_select_param =22;
-  
+
+  //optional bool out_label_class_to_multi_task =24 [default =false];
+  //optional 
+
 }
 
 
@@ -520,7 +523,7 @@ message PoolingParameter {
   optional uint32 pad_h = 11 [default = 0]; // The padding height
   optional uint32 pad_w = 12 [default = 0]; // The padding width
   optional uint32 pad_d = 13 [default = 0]; // The padding depth
-  
+
   optional uint32 kstride = 14 [default = 1]; // The stride (equal in Y, X) of kernel pixels
   optional uint32 kstride_h = 15; // The kernel pixel stride height
   optional uint32 kstride_w = 16; // The kernel pixel stride width
@@ -674,7 +677,7 @@ message Label_Select_Param{
  optional uint32      num_labels                =2 [default=1000];
  optional uint32      num_top_label_balance     =3;
  optional bool        reorder_label             =4 [default=true];
- optional string      class_prob_mapping_file 	=5; 
+ optional string      class_prob_mapping_file 	=5;
 }
 message Label_Prob_Mapping_Param{
  optional bool  ignore_rest_of_label   =      1 [default =true];
@@ -703,7 +706,7 @@ optional string fileName        =3 ;             //file Name with full path
 message ISH_section{
 optional uint32 sectionID =1;
 repeated imageInfo image= 2;
-optional string labels =3; 
+optional string labels =3;
 }
 
 
@@ -711,11 +714,10 @@ optional string labels =3;
 //message ISH_section{
 //optional uint32 sectionID =1;
 //repeated imageInfo image= 2;
-//repeated string labels =3; 
+//repeated string labels =3;
 //}
 
 
 message ISH_section_param{
 repeated ISH_section ISH_section_info=1;
 }
-

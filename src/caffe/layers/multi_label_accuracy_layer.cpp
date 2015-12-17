@@ -48,28 +48,64 @@ Dtype MultiLabelAccuracyLayer<Dtype>::Forward_cpu(
   int count_neg = 0;
   const Dtype* bottom_data = bottom[0]->cpu_data();
   const Dtype* bottom_label = bottom[1]->cpu_data();
+  CHECK_EQ(bottom[0]->num(), bottom[1]->num())<<
+  "the number of input sample data and number of imput labele must be te same ...";
+  if(bottom[1]->channels()*bottom[1]->height()
+  *bottom[1]->width()*bottom[1]->depth()>1)
+    CHECK_EQ(bottom[0]->count(), bottom[1]->count()) <<
+    "MULTI_LABEL_LOSS layer inputs must have the same count.";
+  else
+   extend_class_label_2_multi_task_ =true;
+
   // Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
   int count = bottom[0]->count();
+  const int num = bottom[0]->num();
 
-  for (int ind = 0; ind < count; ++ind) {
-    // Accuracy
-    int label = static_cast<int>(bottom_label[ind]);
-    if (label > 0) {
-    // Update Positive accuracy and count
-      true_positive += (bottom_data[ind] >= 0);
-      false_negative += (bottom_data[ind] < 0);
-      count_pos++;
-    }
-    if (label < 0) {
-    // Update Negative accuracy and count
-      true_negative += (bottom_data[ind] < 0);
-      false_positive += (bottom_data[ind] >= 0);
-      count_neg++;
-    }
+  int num_offset =bottom[0]->channels()*bottom[0]->height()*bottom[0]->width()*bottom[0]->depth();
+  if (extend_class_label_2_multi_task_){
+    // Extend single class label intended for multi-class to
+    // multi-label  binary class tassk for entropy loass computaion.
+    // e.g if class label =5, then it convered to -1 -1 -1 -1 1 -1 -1 ..... until numer of tasks.
+      for (int i=0;i<num;++i){
+        for(int j=0; j<num_offset;++j){
+          int d_idx =i*num_offset+j;
+          int label = bottom_label[i]==j? 1:-1;
+          if (label > 0) {
+          // Update Positive accuracy and count
+            true_positive += (bottom_data[d_idx] >= 0);
+            false_negative += (bottom_data[d_idx] < 0);
+            count_pos++;
+          }
+          if (label < 0) {
+          // Update Negative accuracy and count
+            true_negative += (bottom_data[d_idx] < 0);
+            false_positive += (bottom_data[d_idx] >= 0);
+            count_neg++;
+          }
+        }
+      }
   }
-  
+ else{
+    for (int ind = 0; ind < count; ++ind) {
+      // Accuracy
+      int label = static_cast<int>(bottom_label[ind]);
+      if (label > 0) {
+      // Update Positive accuracy and count
+        true_positive += (bottom_data[ind] >= 0);
+        false_negative += (bottom_data[ind] < 0);
+        count_pos++;
+      }
+      if (label < 0) {
+      // Update Negative accuracy and count
+        true_negative += (bottom_data[ind] < 0);
+        false_positive += (bottom_data[ind] >= 0);
+        count_neg++;
+      }
+    }
+}
+
   // Dtype AUC =0;
-  
+
   // for (int ind = 0; ind < count; ++ind){
      // AUC=AUC + count_neg*true_positive + 0.5*DFP*DTP;
   // }
