@@ -20,14 +20,17 @@ void MultiLabelAccuracyLayer<Dtype>::SetUp(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())
     << "The data and label should have the same number of instances";
-  CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
-    << "The data and label should have the same number of channels";
-  CHECK_EQ(bottom[0]->height(), bottom[1]->height())
-    << "The data and label should have the same height";
-  CHECK_EQ(bottom[0]->width(), bottom[1]->width())
-    << "The data and label should have the same width";
-  CHECK_EQ(bottom[0]->depth(), bottom[1]->depth())
-    << "The data and label should have the same depth";
+  if(bottom[0]->count()/bottom[0]->count()>1){
+      CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
+        << "The data and label should have the same number of channels";
+  }
+
+      CHECK_EQ(bottom[0]->height(), bottom[1]->height())
+        << "The data and label should have the same height";
+      CHECK_EQ(bottom[0]->width(), bottom[1]->width())
+        << "The data and label should have the same width";
+      CHECK_EQ(bottom[0]->depth(), bottom[1]->depth())
+        << "The data and label should have the same depth";
   // Top will contain:
   // top[0] = Sensitivity or Recall (TP/P),
   // top[1] = Specificity (TN/N),
@@ -50,8 +53,7 @@ Dtype MultiLabelAccuracyLayer<Dtype>::Forward_cpu(
   const Dtype* bottom_label = bottom[1]->cpu_data();
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())<<
   "the number of input sample data and number of imput labele must be te same ...";
-  if(bottom[1]->channels()*bottom[1]->height()
-  *bottom[1]->width()*bottom[1]->depth()>1)
+  if(bottom[1]->count()/bottom[1]->num()>1)
     CHECK_EQ(bottom[0]->count(), bottom[1]->count()) <<
     "MULTI_LABEL_LOSS layer inputs must have the same count.";
   else
