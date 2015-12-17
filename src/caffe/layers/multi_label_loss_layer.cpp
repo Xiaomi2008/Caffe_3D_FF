@@ -53,7 +53,7 @@ Dtype MultiLabelLossLayer<Dtype>::Forward_cpu(
   const Dtype* input_data = bottom[0]->cpu_data();
   const Dtype* target = bottom[1]->cpu_data();
   Dtype loss = 0;
-  int num_offset =bottom[0]->channels()*bottom[0]->height()*bottom[0]->width()*bottom[0]->depth();
+  int num_offset =bottom[0]->count()/bottom[0]->num();
   if (extend_class_label_2_multi_task_){
     // Extend single class label intended for multi-class to
     // multi-label  binary class tassk for entropy loass computaion.
@@ -62,7 +62,9 @@ Dtype MultiLabelLossLayer<Dtype>::Forward_cpu(
         for(int j=0; j<num_offset;++j){
           int d_idx =i*num_offset+j;
           Dtype label = target[i]==j? Dtype(1):Dtype(-1);
-          loss -= input_data[d_idx] * ((label > 0) - (input_data[i] >= 0)) -
+          float diff =(label > 0) - (input_data[i]>=0);
+          if( diff>=1) diff *=100;
+          loss -= input_data[d_idx] * (diff) -
               log(1 + exp(input_data[i] - 2 * input_data[i] * (input_data[i] >= 0)));
         }
       }
