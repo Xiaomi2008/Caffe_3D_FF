@@ -171,7 +171,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 	mirro_dimention=layer->PrefetchRand() % 3;
   //no_mirror  =
 	if (layer->output_labels_){
-      //if (mirror && layer->PrefetchRand() % 2) {
+      //if (mirror && layer->PrefetchRand() % 2)
 	  if(do_mirror){
         // Copy mirrored version
 		        size_t top_index=0;
@@ -240,7 +240,7 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 							}
 							else
 							 {
-							    // accept_label          = true;
+							     accept_label          = true;
 							     top_label[top_index]  =datum_element;
 							 }
 						}
@@ -278,7 +278,6 @@ void* ImageLabelDataLayerPrefetch(void* layer_pointer) {
 					 top_label[item_id]  =label;
 				 }
 		}while( !accept_label);
-
 	}
 
 
