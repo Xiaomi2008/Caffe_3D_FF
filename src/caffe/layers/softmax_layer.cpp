@@ -16,19 +16,19 @@ void SoftmaxLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   Layer<Dtype>::SetUp(bottom, top);
   LOG(INFO)<<"start set softmax " << bottom[0]->num()<<" " <<bottom[0]->channels()<<" "<<bottom[0]->height()<<" " <<bottom[0]->width()<<" "<< bottom[0]->depth();
-  
-  
+
+
   outer_num_ = (size_t)bottom[0]->num();
   inner_num_ = (size_t)bottom[0]->height()*(size_t)bottom[0]->width()*(size_t)bottom[0]->depth();
   sum_multiplier_.Reshape(1, bottom[0]->channels(),
       bottom[0]->height(), bottom[0]->width(), bottom[0]->depth());
   LOG(INFO)<<"sum_multiplier_.Reshape";
-  
+
   LOG(INFO)<<"start set softmax " <<  sum_multiplier_.num()<<" " <<sum_multiplier_.channels()<<" "<<sum_multiplier_.height()<<" " <<sum_multiplier_.width()<<" "<< sum_multiplier_.depth();
-  
+
   Dtype* multiplier_data = sum_multiplier_.mutable_cpu_data();
    LOG(INFO)<<"done reshap sum";
-   
+
   // LOG(INFO)<<"";
    (*top)[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
       bottom[0]->height(), bottom[0]->width(), bottom[0]->depth());
@@ -38,8 +38,8 @@ void SoftmaxLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   }
   //caffe_set(sum_multiplier_.count(), Dtype(1), multiplier_data);
   scale_.Reshape(bottom[0]->num(), 1,  bottom[0]->height(), bottom[0]->width(), bottom[0]->depth());
-  
-  
+
+
   LOG(INFO)<<"done set softmax";
 }
 
@@ -54,7 +54,7 @@ Dtype SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   size_t dim = bottom[0]->count() / outer_num_;
   //size_t dim = bottom[0]->count() / bottom[0]->num();
   caffe_copy(bottom[0]->count(), bottom_data, top_data);
-  
+
   for (size_t i = 0; i < outer_num_; ++i) {
     // initialize scale_data to the first plane
     caffe_copy(inner_num_, bottom_data + i * dim, scale_data);
@@ -78,9 +78,9 @@ Dtype SoftmaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       top_data += inner_num_;
     }
   }
-  
-  
-  
+
+
+
   // we need to subtract the max to avoid numerical issues, compute the exp,
   // and then normalize.
   // for (int i = 0; i < num; ++i) {
@@ -112,16 +112,16 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   const Dtype* top_data = top[0]->cpu_data();
   Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
   Dtype* scale_data = scale_.mutable_cpu_data();
-  
+
   //int channels = top[0]->shape(softmax_axis_);
- 
+
   size_t num = top[0]->num();
   size_t channels = top[0]->channels();
-  //int dim = top[0]->count() / top[0]->num(); 
+  //int dim = top[0]->count() / top[0]->num();
   size_t dim = top[0]->count() / outer_num_;
  // size_t dim = top[0]->count() / top[0]->num();
   caffe_copy(top[0]->count(), top_diff, bottom_diff);
-  
+
   for (size_t i = 0; i < outer_num_; ++i) {
     // compute dot(top_diff, top_data) and subtract them from the bottom diff
     for (size_t k = 0; k < inner_num_; ++k) {
@@ -135,8 +135,8 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
   // elementwise multiplication
   caffe_mul(top[0]->count(), bottom_diff, top_data, bottom_diff);
-  
-  
+
+
   // Compute inner1d(top_diff, top_data) and subtract them from the bottom diff
   // for (size_t i = 0; i < num; ++i) {
     // scale_data[i] = caffe_cpu_dot<Dtype>(dim, top_diff + i * dim,
